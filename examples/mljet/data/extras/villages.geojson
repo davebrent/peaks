@@ -1,0 +1,97 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-ide",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2018-07-18T11:24:02Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/620455195",
+        "name": "Goveđari",
+        "place": "village",
+        "population": "151",
+        "population:date": "2011-03-31",
+        "source:population": "DZS 2011"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3627088,
+          42.7827355
+        ]
+      },
+      "id": "node/620455195"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/620455202",
+        "name": "Polače",
+        "place": "village",
+        "population": "113",
+        "population:date": "2011-03-31",
+        "source:population": "DZS 2011"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3796005,
+          42.7862169
+        ]
+      },
+      "id": "node/620455202"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/620455207",
+        "name": "Soline",
+        "place": "village"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3820611,
+          42.7680944
+        ]
+      },
+      "id": "node/620455207"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/813861267",
+        "name": "Pristanište",
+        "place": "hamlet"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3641144,
+          42.7751862
+        ]
+      },
+      "id": "node/813861267"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/1599945022",
+        "name": "Pomena",
+        "place": "hamlet",
+        "population": "52",
+        "population:date": "2011-03-31",
+        "source:population": "DZS 2011"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3443287,
+          42.7866257
+        ]
+      },
+      "id": "node/1599945022"
+    }
+  ]
+}

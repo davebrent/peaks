@@ -1,0 +1,44 @@
+{
+  "type": "FeatureCollection",
+  "generator": "overpass-ide",
+  "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL.",
+  "timestamp": "2018-07-18T11:19:02Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/822113431",
+        "ele": "157",
+        "name": "V. Gradac",
+        "natural": "peak"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3733502,
+          42.7764094
+        ]
+      },
+      "id": "node/822113431"
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "@id": "node/827525678",
+        "ele": "256",
+        "fixme": "height",
+        "name": "Montokuc",
+        "natural": "peak",
+        "tourism": "viewpoint"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          17.3831559,
+          42.7727795
+        ]
+      },
+      "id": "node/827525678"
+    }
+  ]
+}

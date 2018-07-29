@@ -1,0 +1,11 @@
+[package]
+name = "peaks"
+version = "0.1.0"
+authors = ["Dave Poulter <hello@davepoulter.net>"]
+
+[lib]
+name = "peaks"
+
+[dependencies]
+bmp = "0.4.0"
+gdal = "0.4.0"
