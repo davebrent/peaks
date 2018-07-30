@@ -13,8 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+mod bilinear_patch;
 mod height_map;
 
+pub use self::bilinear_patch::BilinearPatch;
 pub use self::height_map::HeightMap;
 use math::{Ray, Vec3};
 use render::{Intersectable, Intersection};

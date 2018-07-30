@@ -16,8 +16,9 @@
 extern crate peaks;
 
 use peaks::{
-    Aabb, DirectionalLight, NormalMaterial, Object, PinholeCamera, Plane,
-    RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
+    Aabb, BilinearPatch, DirectionalLight, NormalMaterial, Object,
+    PinholeCamera, Plane, RegularGridSampler, Renderer, Scene, Sphere, Texture,
+    Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -50,6 +51,15 @@ pub fn main() -> Result<()> {
             ),
             Object::new(
                 Box::new(Sphere::new(Vec3::new(-10.0, 5.0, 5.0), 1.5)),
+                0,
+            ),
+            Object::new(
+                Box::new(BilinearPatch::new(
+                    Vec3::new(-5.0 - 15.0, 0.0 + 8.0, -5.0), // nw
+                    Vec3::new(5.0 - 15.0, 0.0 + 8.0, -5.0),  // ne
+                    Vec3::new(5.0 - 15.0, 5.0 - 8.0, 5.0),   // se
+                    Vec3::new(-5.0 - 15.0, 0.0 + 8.0, 5.0),  // sw
+                )),
                 0,
             ),
         ],

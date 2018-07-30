@@ -84,6 +84,14 @@ impl Intersection {
     pub fn is_none(&self) -> bool {
         self.t == INFINITY
     }
+
+    pub fn to_option(&self) -> Option<Intersection> {
+        if self.is_none() {
+            None
+        } else {
+            Some(*self)
+        }
+    }
 }
 
 impl Object {

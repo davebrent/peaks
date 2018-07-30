@@ -30,7 +30,7 @@ mod textures;
 
 pub use cameras::PinholeCamera;
 pub use math::{Color, Ray, Vec3};
-pub use primitives::{Aabb, HeightMap, Plane, Sphere};
+pub use primitives::{Aabb, BilinearPatch, HeightMap, Plane, Sphere};
 pub use render::{
     BasicMaterial, DirectionalLight, Intersection, Material, NormalMaterial,
     Object, Renderer, Scene,
