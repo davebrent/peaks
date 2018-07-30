@@ -13,16 +13,22 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 * [ ] Add marker primitives
 * [ ] Terrain pre-processing raster operations (feature preserving smoothing)
 * [ ] Non photo realistic features outlines on the terrain
+* [ ] Aerial perspective
 * [ ] Documentation
     * [ ] Coordinate systems
     * [ ] Linear color
 
 ## Reading
 
+* (2011) Interactive Local Terrain Deformation Inspired by Hand-painted
+  Panoramas (Helen Jenny and Bernhard Jenny and William E Cartwright and
+  Lorenz Hurni)
 * (2010) Terrain Sculptor: Generalizing Terrain Models for Relief Shading
   (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
 * (2008) Maximum Mipmaps for Fast, Accurate, and Scalable Dynamic Height Field
   Rendering (Art Tevs and Ivo Ihrke and Hans-Peter Seidel)
+* (2007) Panorama maps with non-linear ray tracing (Falk, Martin & Schafhitzel,
+  Tobias, Weiskopf, Daniel, Ertl, Thomas)
 * (2004) Ray Bilinear Patch Intersections (Shaun D. Ramsey and Kristin Potter
   and Charles Hansen)
 * (2003) Feature preserving variational smoothing of terrain data (Tolga
