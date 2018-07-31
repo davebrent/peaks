@@ -37,8 +37,6 @@ pub fn main() -> Result<()> {
     peaks::ops::rgb_height_map(&mono_map, &mut height_map, 20.0);
     peaks::ops::normals(&height_map, &mut normal_map);
 
-    let quad_tree = peaks::spatial::height_map_quad_tree(&height_map);
-
     let height_map = HeightMap::new(
         [
             -(mono_map.width as f64 / 2.0),
@@ -48,7 +46,6 @@ pub fn main() -> Result<()> {
         ],
         height_map,
         normal_map,
-        quad_tree,
     );
 
     let width = 960;

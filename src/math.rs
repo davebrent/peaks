@@ -19,6 +19,13 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
+/// Round to the nearest power of two
+pub fn ceil_pow2(num: usize) -> usize {
+    let num = num as f64;
+    let exp = (num.log2() / 2.0_f64.log2()).ceil();
+    2.0_f64.powf(exp) as usize
+}
+
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Color {
     pub r: u8,

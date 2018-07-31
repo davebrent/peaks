@@ -4,7 +4,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 
 ## TODO
 
-* [ ] Ray bilinear patch intersection for terrain
+* [x] Ray bilinear patch intersection for terrain
 * [ ] Better sub sampling method (Poisson disc...)
 * [ ] Orthographic camera
 * [ ] Use simulated film values for setting field of view

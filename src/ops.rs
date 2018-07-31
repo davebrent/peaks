@@ -82,6 +82,43 @@ where
     }
 }
 
+/// Create map of bilinear patches and its first mipmap level from a height map
+pub fn height_map_to_bilinear_patch(
+    input: &Texture<f64>,
+    level0: &mut Texture<[f64; 4]>,
+    level1: &mut Texture<f64>,
+) {
+    assert_eq!(level0.width, level1.width);
+    assert_eq!(level0.height, level1.height);
+    assert_eq!(input.width - 1, level0.width);
+    assert_eq!(input.height - 1, level0.height);
+
+    for y in 0..level0.width {
+        for x in 0..level0.height {
+            // Read data in `z` order but write out in a clockwise order
+            let [nw, ne, sw, se] = input.lookup2x2(x, y);
+            level0.write1x1(x, y, [nw, ne, se, sw]);
+            level1.write1x1(x, y, nw.max(ne).max(se).max(sw));
+        }
+    }
+}
+
+/// Create the next maximum mipmap level for a floating point texture
+pub fn maximum_mipmap_bilinear_patch(
+    input: &Texture<f64>,
+    output: &mut Texture<f64>,
+) {
+    assert_eq!(input.width / 2, output.width);
+    assert_eq!(input.height / 2, output.height);
+
+    for y in 0..output.height {
+        for x in 0..output.width {
+            let [p1, p2, p3, p4] = input.lookup2x2(x * 2, y * 2);
+            output.write1x1(x, y, p1.max(p2).max(p3).max(p4));
+        }
+    }
+}
+
 /// Scale a surface by `n`
 pub fn scale<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
 where
@@ -206,5 +243,71 @@ mod tests {
         assert_eq!(dest.lookup1x1(0, 0), 0.0);
         assert_eq!(dest.lookup1x1(6, 6), 250.0);
         assert_eq!(dest.lookup1x1(7, 7), 255.0);
+    }
+
+    #[test]
+    fn test_maximum_mipmaps_bilinear_patches() {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let mut bilinear_patches = Texture::blank(4, 4);
+        let mut bilinear_patches_mipmap0 = Texture::blank(4, 4);
+        let mut bilinear_patches_mipmap1 = Texture::blank(2, 2);
+        let mut bilinear_patches_mipmap2 = Texture::blank(1, 1);
+        let height_map = Texture::new(
+            5,
+            5,
+            vec![
+                1.0, 3.5, 6.0, 8.5, 11.0, 1.5, 4.0, 6.5, 9.0, 11.5, 2.0, 4.5,
+                7.0, 9.5, 12.0, 2.5, 5.0, 7.5, 10.0, 12.5, 3.0, 5.5, 8.0, 10.5,
+                13.0,
+            ],
+        );
+
+        height_map_to_bilinear_patch(
+            &height_map,
+            &mut bilinear_patches,
+            &mut bilinear_patches_mipmap0,
+        );
+        maximum_mipmap_bilinear_patch(
+            &bilinear_patches_mipmap0,
+            &mut bilinear_patches_mipmap1,
+        );
+        maximum_mipmap_bilinear_patch(
+            &bilinear_patches_mipmap1,
+            &mut bilinear_patches_mipmap2,
+        );
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        assert_eq!(bilinear_patches.buffer, [
+            // Row 1
+            [1.0, 3.5, 4.0, 1.5],
+            [3.5, 6.0, 6.5, 4.0],
+            [6.0, 8.5, 9.0, 6.5],
+            [8.5, 11.0, 11.5, 9.0],
+            // Row 2
+            [1.5, 4.0, 4.5, 2.0],
+            [4.0, 6.5, 7.0, 4.5],
+            [6.5, 9.0, 9.5, 7.0],
+            [9.0, 11.5, 12.0, 9.5],
+            // Row 3
+            [2.0, 4.5, 5.0, 2.5],
+            [4.5, 7.0, 7.5, 5.0],
+            [7.0, 9.5, 10.0, 7.5],
+            [9.5, 12.0, 12.5, 10.0],
+            // Row 4
+            [2.5, 5.0, 5.5, 3.0],
+            [5.0, 7.5, 8.0, 5.5],
+            [7.5, 10.0, 10.5, 8.0],
+            [10.0, 12.5, 13.0, 10.5],
+        ]);
+
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        assert_eq!(bilinear_patches_mipmap0.buffer, [
+            4.0, 6.5,  9.0, 11.5,
+            4.5, 7.0,  9.5, 12.0,
+            5.0, 7.5, 10.0, 12.5,
+            5.5, 8.0, 10.5, 13.0,
+        ]);
+        assert_eq!(bilinear_patches_mipmap1.buffer, [7.0, 12.0, 8.0, 13.0]);
+        assert_eq!(bilinear_patches_mipmap2.buffer, [13.0]);
     }
 }

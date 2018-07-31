@@ -25,7 +25,6 @@ pub mod ops;
 mod primitives;
 mod render;
 mod samplers;
-pub mod spatial;
 mod textures;
 
 pub use cameras::PinholeCamera;
@@ -36,5 +35,4 @@ pub use render::{
     Object, Renderer, Scene,
 };
 pub use samplers::RegularGridSampler;
-pub use spatial::{QuadTree, QuadTreeNode};
 pub use textures::Texture;

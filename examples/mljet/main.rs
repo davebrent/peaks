@@ -73,9 +73,7 @@ pub fn main() -> Result<()> {
     let mut normal_map = Texture::blank(w, h);
     peaks::ops::normals(&height_map, &mut normal_map);
 
-    let quad_tree = peaks::spatial::height_map_quad_tree(&height_map);
-    let height_map =
-        HeightMap::new(transform, height_map, normal_map, quad_tree);
+    let height_map = HeightMap::new(transform, height_map, normal_map);
 
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
