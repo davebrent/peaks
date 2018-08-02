@@ -67,6 +67,21 @@ fn operator3x3<F, I, O>(
     }
 }
 
+/// Blit one texture onto another
+pub fn blit<T>(input: &Texture<T>, output: &mut Texture<T>, x: usize, y: usize)
+where
+    T: Send + Sync + Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+{
+    let row_len = input.width;
+    for src_y in 0..input.height {
+        let src_offset = input.width * src_y;
+        let dest_offset = output.width * (src_y + y) + x;
+        let dest = &mut output.buffer[dest_offset..dest_offset + row_len];
+        let row = &input.buffer[src_offset..src_offset + row_len];
+        dest.copy_from_slice(row);
+    }
+}
+
 /// Scale a surface by `n`
 pub fn scale<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
 where
@@ -177,5 +192,19 @@ mod tests {
         slope(&input, &mut output, 5.0);
         let result = output.lookup1x1(1, 1).to_degrees().round() as usize;
         assert_eq!(result, 75);
+    }
+
+    #[test]
+    fn blitting_textures() {
+        let mut dest = Texture::new(8, 8, vec![0.0; 8 * 8]);
+        let mut src = Texture::new(2, 2, vec![0.0; 2 * 2]);
+
+        src.write1x1(0, 0, 250.0);
+        src.write1x1(1, 1, 255.0);
+        blit(&src, &mut dest, 6, 6);
+
+        assert_eq!(dest.lookup1x1(0, 0), 0.0);
+        assert_eq!(dest.lookup1x1(6, 6), 250.0);
+        assert_eq!(dest.lookup1x1(7, 7), 255.0);
     }
 }

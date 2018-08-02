@@ -185,18 +185,6 @@ where
         }
     }
 
-    /// Blit another texture onto this texture
-    pub fn blit(&mut self, x: usize, y: usize, other: &Texture<T>) {
-        let row_len = other.width;
-        for src_y in 0..other.height {
-            let src_offset = other.width * src_y;
-            let dest_offset = self.width * (src_y + y) + x;
-            let dest = &mut self.buffer[dest_offset..dest_offset + row_len];
-            let row = &other.buffer[src_offset..src_offset + row_len];
-            dest.copy_from_slice(row);
-        }
-    }
-
     /// Return a bilinearly filtered value from the texture
     pub fn bilinear(&self, x: f64, y: f64) -> T {
         if x < 0.0
@@ -238,20 +226,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn blitting_textures() {
-        let mut dest = Texture::new(8, 8, vec![0.0; 8 * 8]);
-        let mut src = Texture::new(2, 2, vec![0.0; 2 * 2]);
-
-        src.write1x1(0, 0, 250.0);
-        src.write1x1(1, 1, 255.0);
-        dest.blit(6, 6, &src);
-
-        assert_eq!(dest.lookup1x1(0, 0), 0.0);
-        assert_eq!(dest.lookup1x1(6, 6), 250.0);
-        assert_eq!(dest.lookup1x1(7, 7), 255.0);
-    }
 
     #[test]
     fn iterating_image_tiles() {
