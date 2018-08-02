@@ -16,6 +16,11 @@
 use std::cmp;
 use std::ops::{Add, Mul};
 
+pub trait Bilinear {
+    type Item;
+    fn bilinear(&self, x: f64, y: f64) -> Self::Item;
+}
+
 #[derive(Clone, Copy, Default, Debug, PartialEq)]
 pub struct Tile {
     pub x: usize,
@@ -93,7 +98,7 @@ impl Iterator for Tile {
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Texture<T>
 where
-    T: Send + Sync + Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+    T: Copy + Clone + Default,
 {
     pub width: usize,
     pub height: usize,
@@ -102,7 +107,7 @@ where
 
 impl<T> Texture<T>
 where
-    T: Send + Sync + Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+    T: Copy + Clone + Default,
 {
     pub fn blank(width: usize, height: usize) -> Texture<T> {
         Texture {
@@ -185,8 +190,26 @@ where
         }
     }
 
+    /// Iterate over the image in fixed size square tiles
+    pub fn tiles(&mut self, size: usize) -> TileIterator {
+        TileIterator {
+            width: self.width,
+            height: self.height,
+            size,
+            x: 0,
+            y: 0,
+        }
+    }
+}
+
+impl<T> Bilinear for Texture<T>
+where
+    T: Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+{
+    type Item = T;
+
     /// Return a bilinearly filtered value from the texture
-    pub fn bilinear(&self, x: f64, y: f64) -> T {
+    fn bilinear(&self, x: f64, y: f64) -> T {
         if x < 0.0
             || x + 1.0 >= self.width as f64
             || y < 0.0
@@ -209,17 +232,6 @@ where
         let d = c11 * tx * ty;
 
         a + b + c + d
-    }
-
-    /// Iterate over the image in fixed size square tiles
-    pub fn tiles(&mut self, size: usize) -> TileIterator {
-        TileIterator {
-            width: self.width,
-            height: self.height,
-            size,
-            x: 0,
-            y: 0,
-        }
     }
 }
 
