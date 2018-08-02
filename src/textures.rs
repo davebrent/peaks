@@ -133,7 +133,7 @@ where
     }
 
     /// Read a 2x2 window from the texture
-    fn lookup2x2(&self, x: usize, y: usize) -> [T; 4] {
+    pub fn lookup2x2(&self, x: usize, y: usize) -> [T; 4] {
         let i1 = self.width * y + x;
         let i2 = self.width * (y + 1) + x;
         [
