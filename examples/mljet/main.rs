@@ -71,7 +71,12 @@ pub fn main() -> Result<()> {
     let h = height_map.height;
 
     let mut normal_map = Texture::blank(w, h);
-    peaks::ops::normals(&height_map, &mut normal_map);
+    peaks::ops::normals(
+        &height_map,
+        &mut normal_map,
+        transform[2],
+        transform[3],
+    );
 
     let height_map = HeightMap::new(transform, height_map, normal_map);
 

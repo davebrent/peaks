@@ -35,7 +35,7 @@ pub fn main() -> Result<()> {
     let mut normal_map = Texture::blank(mono_map.width, mono_map.height);
 
     peaks::ops::rgb_height_map(&mono_map, &mut height_map, 20.0);
-    peaks::ops::normals(&height_map, &mut normal_map);
+    peaks::ops::normals(&height_map, &mut normal_map, 1.0, 1.0);
 
     let height_map = HeightMap::new(
         [

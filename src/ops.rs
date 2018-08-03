@@ -164,14 +164,22 @@ pub fn lowpass<T>(input: &Texture<f64>, output: &mut Texture<f64>) {
 }
 
 /// Calculate a surfaces normals
-pub fn normals(input: &Texture<f64>, output: &mut Texture<Vec3>) {
-    operator3x3(input, output, |window| {
-        let e4 = window[4];
-        let e6 = window[6];
-        let e2 = window[1];
-        let e8 = window[8];
-        Vec3::normalize(Vec3::new(e4 - e6, 2.0, e2 - e8))
-    })
+pub fn normals(
+    input: &Texture<f64>,
+    output: &mut Texture<Vec3>,
+    pixel_width: f64,
+    pixel_height: f64,
+) {
+    for y in 0..output.height - 1 {
+        for x in 0..output.width - 1 {
+            let [nw, ne, sw, _] = input.lookup2x2(x, y);
+            let nw = Vec3::new(-0.5 * pixel_width, nw, -0.5 * pixel_height);
+            let ne = Vec3::new(0.5 * pixel_width, ne, -0.5 * pixel_height);
+            let sw = Vec3::new(-0.5 * pixel_width, sw, 0.5 * pixel_height);
+            let normal = Vec3::normalize(Vec3::cross(sw - ne, ne - nw));
+            output.write1x1(x, y, normal);
+        }
+    }
 }
 
 /// Calculate a surfaces 'slope' in radians
@@ -243,6 +251,35 @@ mod tests {
         assert_eq!(dest.lookup1x1(0, 0), 0.0);
         assert_eq!(dest.lookup1x1(6, 6), 250.0);
         assert_eq!(dest.lookup1x1(7, 7), 255.0);
+    }
+
+    #[test]
+    fn normals_flat_surface() {
+        let mut output = Texture::blank(3, 3);
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let input = Texture::new(3, 3, vec![
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0,
+            0.0, 0.0, 0.0
+        ]);
+        normals(&input, &mut output, 1.0, 1.0);
+        assert_eq!(output.lookup1x1(1, 1), Vec3::new(0.0, 1.0, 0.0))
+    }
+
+    #[test]
+    fn normals_sloped_surface() {
+        let mut output = Texture::blank(3, 3);
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let input = Texture::new(3, 3, vec![
+            1.0, 2.0 / 3.0, 1.0 / 3.0,
+            1.0, 2.0 / 3.0, 1.0 / 3.0,
+            1.0, 2.0 / 3.0, 1.0 / 3.0,
+        ]);
+        normals(&input, &mut output, 1.0 / 3.0, 1.0 / 3.0);
+        assert_eq!(
+            output.lookup1x1(1, 1),
+            Vec3::new(0.7071067811865476, 0.7071067811865476, 0.0)
+        )
     }
 
     #[test]
