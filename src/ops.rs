@@ -93,8 +93,8 @@ pub fn height_map_to_bilinear_patch(
     assert_eq!(input.width - 1, level0.width);
     assert_eq!(input.height - 1, level0.height);
 
-    for y in 0..level0.width {
-        for x in 0..level0.height {
+    for y in 0..level0.height {
+        for x in 0..level0.width {
             // Read data in `z` order but write out in a clockwise order
             let [nw, ne, sw, se] = input.lookup2x2(x, y);
             level0.write1x1(x, y, [nw, ne, se, sw]);
