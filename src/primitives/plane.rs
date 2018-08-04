@@ -13,14 +13,28 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-mod aabb;
-mod bilinear_patch;
-mod height_map;
-mod plane;
-mod sphere;
+use math::{Ray, Vec3};
+use render::{Intersectable, Intersection};
 
-pub use self::aabb::Aabb;
-pub use self::bilinear_patch::BilinearPatch;
-pub use self::height_map::HeightMap;
-pub use self::plane::Plane;
-pub use self::sphere::Sphere;
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub struct Plane {
+    normal: Vec3,
+    distance: f64,
+}
+
+impl Plane {
+    pub fn new(normal: Vec3, distance: f64) -> Plane {
+        Plane { normal, distance }
+    }
+}
+
+impl Intersectable for Plane {
+    fn intersects(&self, ray: Ray) -> Option<Intersection> {
+        let denom = Vec3::dot(self.normal, ray.direction);
+        if denom.abs() < 1e-6 {
+            return None;
+        }
+        let t = (-self.distance - Vec3::dot(self.normal, ray.origin)) / denom;
+        Some(Intersection::new(t, self.normal))
+    }
+}

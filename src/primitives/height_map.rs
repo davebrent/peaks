@@ -13,9 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use super::aabb::Aabb;
+use super::bilinear_patch::BilinearPatch;
 use math::{ceil_pow2, Ray, Vec3};
 use ops::{blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch};
-use primitives::{Aabb, BilinearPatch};
 use render::{Intersectable, Intersection};
 use std::cmp;
 use textures::{Bilinear, Texture};
