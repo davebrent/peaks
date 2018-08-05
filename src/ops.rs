@@ -14,18 +14,18 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 use math::{Color, Vec3};
-use std::ops::{Add, Mul};
+use std::ops::Mul;
 use textures::Texture;
 
 /// Map a function over each pixel in a texture
-fn operator1x1<F, I, O>(
+pub fn operator1x1<F, I, O>(
     input: &Texture<I>,
     output: &mut Texture<O>,
     mut callback: F,
 ) where
     F: FnMut(I) -> O,
-    I: Send + Sync + Mul<f64, Output = I> + Add<Output = I> + Copy + Default,
-    O: Send + Sync + Mul<f64, Output = O> + Add<Output = O> + Copy + Default,
+    I: Copy + Default,
+    O: Copy + Default,
 {
     assert_eq!(input.width, output.width);
     assert_eq!(input.height, output.height);
@@ -43,14 +43,14 @@ fn operator1x1<F, I, O>(
 }
 
 /// Map a function over a texture with a 3x3 window
-fn operator3x3<F, I, O>(
+pub fn operator3x3<F, I, O>(
     input: &Texture<I>,
     output: &mut Texture<O>,
     mut callback: F,
 ) where
     F: FnMut(&[I; 9]) -> O,
-    I: Send + Sync + Mul<f64, Output = I> + Add<Output = I> + Copy + Default,
-    O: Send + Sync + Mul<f64, Output = O> + Add<Output = O> + Copy + Default,
+    I: Copy + Default,
+    O: Copy + Default,
 {
     assert_eq!(input.width, output.width);
     assert_eq!(input.height, output.height);
@@ -70,7 +70,7 @@ fn operator3x3<F, I, O>(
 /// Blit one texture onto another
 pub fn blit<T>(input: &Texture<T>, output: &mut Texture<T>, x: usize, y: usize)
 where
-    T: Send + Sync + Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+    T: Copy + Default,
 {
     let row_len = input.width;
     for src_y in 0..input.height {
@@ -122,7 +122,7 @@ pub fn maximum_mipmap_bilinear_patch(
 /// Scale a surface by `n`
 pub fn scale<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
 where
-    T: Send + Sync + Mul<f64, Output = T> + Add<Output = T> + Copy + Default,
+    T: Mul<f64, Output = T> + Copy + Default,
 {
     operator1x1(input, output, |value| value * n)
 }

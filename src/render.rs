@@ -19,12 +19,12 @@ use cameras::Camera;
 use math::{Ray, Vec3};
 use samplers::RegularGridSampler;
 
-pub trait Intersectable: Send + Sync {
+pub trait Intersectable {
     /// Object ray intersection test
     fn intersects(&self, ray: Ray) -> Option<Intersection>;
 }
 
-pub trait Material: Send + Sync {
+pub trait Material {
     /// Return a color for an intersection
     fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3;
 }

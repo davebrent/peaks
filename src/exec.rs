@@ -113,7 +113,7 @@ pub fn render<C>(
     image: &mut Texture<Vec3>,
 ) -> bool
 where
-    C: 'static + Sync + Send + Camera,
+    C: 'static + Camera,
 {
     let mut progress = ProgressCounter::new(30, width * height);
     let mut completed = 0;
