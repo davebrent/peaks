@@ -186,8 +186,8 @@ pub fn normals(
 ///
 /// See explanation on the [ArcGIS tools documentation][1].
 ///
-///   [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/
-///   spatial-analyst-toolbox/how-slope-works.htm
+/// [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/\
+/// spatial-analyst-toolbox/how-slope-works.htm
 pub fn slope(input: &Texture<f64>, output: &mut Texture<f64>, pixel_size: f64) {
     let cell_size = 8.0 * pixel_size;
     operator3x3(input, output, |window| {
@@ -203,10 +203,10 @@ pub fn slope(input: &Texture<f64>, output: &mut Texture<f64>, pixel_size: f64) {
 ///
 /// See explanation on the ArcGIS documentation [here][1] and [here][2].
 ///
-///   [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/
-///   spatial-analyst-toolbox/how-curvature-works.htm
-///   [2]: https://desktop.arcgis.com/en/arcmap/10.3/manage-data/
-///   raster-and-images/curvature-function.htm
+/// [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/\
+/// spatial-analyst-toolbox/how-curvature-works.htm
+/// [2]: https://desktop.arcgis.com/en/arcmap/10.3/manage-data/\
+/// raster-and-images/curvature-function.htm
 pub fn curvature(
     input: &Texture<f64>,
     output: &mut Texture<f64>,
