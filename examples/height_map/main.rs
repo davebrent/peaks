@@ -32,10 +32,7 @@ pub fn main() -> Result<()> {
         .join("height_map.bmp")));
 
     let mut height_map = Texture::blank(mono_map.width, mono_map.height);
-    let mut normal_map = Texture::blank(mono_map.width, mono_map.height);
-
     peaks::ops::rgb_height_map(&mono_map, &mut height_map, 20.0);
-    peaks::ops::normals(&height_map, &mut normal_map, 1.0, 1.0);
 
     let height_map = HeightMap::new(
         [
@@ -44,8 +41,7 @@ pub fn main() -> Result<()> {
             1.0,
             1.0,
         ],
-        height_map,
-        normal_map,
+        &height_map,
     );
 
     let width = 960;

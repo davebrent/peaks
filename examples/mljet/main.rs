@@ -67,18 +67,7 @@ pub fn main() -> Result<()> {
         Vec3::new(0.0, 1.0, 0.0),
     );
 
-    let w = height_map.width;
-    let h = height_map.height;
-
-    let mut normal_map = Texture::blank(w, h);
-    peaks::ops::normals(
-        &height_map,
-        &mut normal_map,
-        transform[2],
-        transform[3],
-    );
-
-    let height_map = HeightMap::new(transform, height_map, normal_map);
+    let height_map = HeightMap::new(transform, &height_map);
 
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,

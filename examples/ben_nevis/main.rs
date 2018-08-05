@@ -81,16 +81,7 @@ pub fn main() -> Result<()> {
     let mut height_map =
         Texture::blank(raw_height_data.width, raw_height_data.height);
     peaks::ops::scale(&raw_height_data, &mut height_map, vertical_exageration);
-
-    let mut normal_map = Texture::blank(height_map.width, height_map.height);
-    peaks::ops::normals(
-        &height_map,
-        &mut normal_map,
-        transform[2],
-        transform[3],
-    );
-
-    let height_map = HeightMap::new(transform, height_map, normal_map);
+    let height_map = HeightMap::new(transform, &height_map);
 
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,

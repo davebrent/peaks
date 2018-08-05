@@ -16,7 +16,9 @@
 use super::aabb::Aabb;
 use super::bilinear_patch::BilinearPatch;
 use math::{ceil_pow2, Ray, Vec3};
-use ops::{blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch};
+use ops::{
+    blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch, normals,
+};
 use render::{Intersectable, Intersection};
 use std::cmp;
 use textures::{Bilinear, Texture};
@@ -33,11 +35,12 @@ pub struct HeightMap {
 }
 
 impl HeightMap {
-    pub fn new(
-        transform: [f64; 4],
-        height_map: Texture<f64>,
-        normal_map: Texture<Vec3>,
-    ) -> HeightMap {
+    pub fn new(transform: [f64; 4], height_map: &Texture<f64>) -> HeightMap {
+        // Generate a normal map from the height map
+        let mut normal_map =
+            Texture::blank(height_map.width, height_map.height);
+        normals(height_map, &mut normal_map, transform[2], transform[3]);
+
         // Round the height map size to the nearest power of two
         let height_map_size = height_map.width.max(height_map.height);
         let mut size = ceil_pow2(height_map_size);
@@ -185,15 +188,11 @@ mod tests {
 
     #[test]
     fn height_map_transform_raster_to_world() {
-        let hmap = HeightMap::new(
-            [-100.0, -100.0, 2.0, 2.0],
-            Default::default(),
-            Default::default(),
-        );
-
-        assert_eq!(hmap.world_to_raster(-100.0, -100.0), (0.0, 0.0));
-        assert_eq!(hmap.world_to_raster(100.0, -100.0), (100.0, 0.0));
-        assert_eq!(hmap.world_to_raster(100.0, 100.0), (100.0, 100.0));
-        assert_eq!(hmap.world_to_raster(-100.0, 100.0), (0.0, 100.0));
+        let height_map =
+            HeightMap::new([-100.0, -100.0, 2.0, 2.0], &Texture::blank(1, 1));
+        assert_eq!(height_map.world_to_raster(-100.0, -100.0), (0.0, 0.0));
+        assert_eq!(height_map.world_to_raster(100.0, -100.0), (100.0, 0.0));
+        assert_eq!(height_map.world_to_raster(100.0, 100.0), (100.0, 100.0));
+        assert_eq!(height_map.world_to_raster(-100.0, 100.0), (0.0, 100.0));
     }
 }
