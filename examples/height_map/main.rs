@@ -16,8 +16,8 @@
 extern crate peaks;
 
 use peaks::{
-    BasicMaterial, HeightMap, NormalMaterial, Object, PinholeCamera,
-    RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
+    AffineTransform, BasicMaterial, HeightMap, NormalMaterial, Object,
+    PinholeCamera, RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -35,12 +35,12 @@ pub fn main() -> Result<()> {
     peaks::ops::rgb_height_map(&mono_map, &mut height_map, 20.0);
 
     let height_map = HeightMap::new(
-        [
+        AffineTransform::new(
             -(mono_map.width as f64 / 2.0),
             -(mono_map.height as f64 / 2.0),
             1.0,
             1.0,
-        ],
+        ),
         &height_map,
     );
 

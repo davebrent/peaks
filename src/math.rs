@@ -26,6 +26,59 @@ pub fn ceil_pow2(num: usize) -> usize {
     2.0_f64.powf(exp) as usize
 }
 
+/// Represents a simple linear transformation
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub struct AffineTransform {
+    transform: [f64; 4],
+}
+
+impl AffineTransform {
+    pub fn new(e: f64, f: f64, a: f64, d: f64) -> AffineTransform {
+        AffineTransform {
+            transform: [e, f, a, d],
+        }
+    }
+
+    /// Return the result of the transform
+    #[inline(always)]
+    pub fn forward(&self, x: f64, y: f64) -> (f64, f64) {
+        let [e, f, a, d] = self.transform;
+        let x = e + x * a;
+        let y = f + y * d;
+        (x, y)
+    }
+
+    /// Return the transformation across quadtree levels
+    #[inline(always)]
+    pub fn quadtree(&self, level: usize, x: f64, y: f64) -> (f64, f64) {
+        let [e, f, a, d] = self.transform;
+        let a = a * (2_usize.pow(level as u32) as f64);
+        let d = d * (2_usize.pow(level as u32) as f64);
+        (e + x * a, f + y * d)
+    }
+
+    /// Return the inverse of the transform
+    #[inline(always)]
+    pub fn inverse(&self, x: f64, y: f64) -> (f64, f64) {
+        let [e, f, a, d] = self.transform;
+        let x = (x - e) / a;
+        let y = (y - f) / d;
+        (x, y)
+    }
+
+    /// Return the x/y units size of the transform
+    #[inline(always)]
+    pub fn unit_size(&self) -> (f64, f64) {
+        (self.transform[2], self.transform[3])
+    }
+}
+
+impl Default for AffineTransform {
+    fn default() -> AffineTransform {
+        AffineTransform::new(0.0, 0.0, 1.0, 1.0)
+    }
+}
+
 #[derive(Debug, Default, Copy, Clone, PartialEq)]
 pub struct Color {
     pub r: u8,
@@ -323,5 +376,14 @@ mod tests {
         let b = Vec3::new(0.0, 0.0, 20.0);
         assert_eq!(Vec3::distance(a, b), 10.0);
         assert_eq!(Vec3::distance(b, a), 10.0);
+    }
+
+    #[test]
+    fn inverse_affine_transforms() {
+        let t = AffineTransform::new(-100.0, -100.0, 2.0, 2.0);
+        assert_eq!(t.inverse(-100.0, -100.0), (0.0, 0.0));
+        assert_eq!(t.inverse(100.0, -100.0), (100.0, 0.0));
+        assert_eq!(t.inverse(100.0, 100.0), (100.0, 100.0));
+        assert_eq!(t.inverse(-100.0, 100.0), (0.0, 100.0));
     }
 }

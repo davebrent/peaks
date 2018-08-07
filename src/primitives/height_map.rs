@@ -15,7 +15,7 @@
 
 use super::aabb::Aabb;
 use super::bilinear_patch::BilinearPatch;
-use math::{ceil_pow2, Ray, Vec3};
+use math::{ceil_pow2, AffineTransform, Ray, Vec3};
 use ops::{
     blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch, normals,
 };
@@ -25,7 +25,7 @@ use textures::{Bilinear, Texture};
 
 pub struct HeightMap {
     /// A transform from world space coordinates to raster space
-    pub transform: [f64; 4],
+    pub transform: AffineTransform,
     /// Normal values for the terrain
     pub normal_map: Texture<Vec3>,
     /// Map containing bilinear patches
@@ -35,11 +35,15 @@ pub struct HeightMap {
 }
 
 impl HeightMap {
-    pub fn new(transform: [f64; 4], height_map: &Texture<f64>) -> HeightMap {
+    pub fn new(
+        transform: AffineTransform,
+        height_map: &Texture<f64>,
+    ) -> HeightMap {
         // Generate a normal map from the height map
         let mut normal_map =
             Texture::blank(height_map.width, height_map.height);
-        normals(height_map, &mut normal_map, transform[2], transform[3]);
+        let (px, py) = transform.unit_size();
+        normals(height_map, &mut normal_map, px, py);
 
         // Round the height map size to the nearest power of two
         let height_map_size = height_map.width.max(height_map.height);
@@ -77,21 +81,6 @@ impl HeightMap {
             maximum_mipmaps,
         }
     }
-
-    /// Transform world coordinates to UVs
-    fn world_to_raster(&self, x: f64, y: f64) -> (f64, f64) {
-        let x = (x - self.transform[0]) / self.transform[2];
-        let y = (y - self.transform[1]) / self.transform[3];
-        (x, y)
-    }
-
-    fn raster_to_world(&self, level: u32, x: f64, y: f64) -> (f64, f64) {
-        let width = self.transform[2] * (2_usize.pow(level as u32) as f64);
-        let depth = self.transform[3] * (2_usize.pow(level as u32) as f64);
-        let x = self.transform[0] + (x * width);
-        let y = self.transform[1] + (y * depth);
-        (x, y)
-    }
 }
 
 impl Intersectable for HeightMap {
@@ -104,13 +93,13 @@ impl Intersectable for HeightMap {
         let flat_dist_comp =
             |(al, ax, ay): &(usize, usize, usize),
              (bl, bx, by): &(usize, usize, usize)| {
-                let (ax, az) = self.raster_to_world(
-                    *al as u32,
+                let (ax, az) = self.transform.quadtree(
+                    *al,
                     *ax as f64 + 0.5,
                     *ay as f64 + 0.5,
                 );
-                let (bx, bz) = self.raster_to_world(
-                    *bl as u32,
+                let (bx, bz) = self.transform.quadtree(
+                    *bl,
                     *bx as f64 + 0.5,
                     *by as f64 + 0.5,
                 );
@@ -127,12 +116,11 @@ impl Intersectable for HeightMap {
         while let Some((level, x, y)) = stack.pop() {
             let mipmap = &self.maximum_mipmaps[level];
 
-            let lu = level as u32;
             let (fx, fx1) = (x as f64, x as f64 + 1.0);
             let (fy, fy1) = (y as f64, y as f64 + 1.0);
 
-            let (min_x, min_z) = self.raster_to_world(lu, fx, fy);
-            let (max_x, max_z) = self.raster_to_world(lu, fx1, fy1);
+            let (min_x, min_z) = self.transform.quadtree(level, fx, fy);
+            let (max_x, max_z) = self.transform.quadtree(level, fx1, fy1);
             let (min_y, max_y) = (0.0, mipmap.lookup1x1(x, y));
 
             let aabb = Aabb::new(
@@ -159,7 +147,7 @@ impl Intersectable for HeightMap {
                 match patch.intersects(ray) {
                     Some(intersection) => {
                         let point = ray.origin + ray.direction * intersection.t;
-                        let (x, y) = self.world_to_raster(point.x, point.z);
+                        let (x, y) = self.transform.inverse(point.x, point.z);
                         let normal = self.normal_map.bilinear(x, y);
                         return Some(Intersection::new(intersection.t, normal));
                     }
@@ -179,20 +167,5 @@ impl Intersectable for HeightMap {
         }
 
         None
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn height_map_transform_raster_to_world() {
-        let height_map =
-            HeightMap::new([-100.0, -100.0, 2.0, 2.0], &Texture::blank(1, 1));
-        assert_eq!(height_map.world_to_raster(-100.0, -100.0), (0.0, 0.0));
-        assert_eq!(height_map.world_to_raster(100.0, -100.0), (100.0, 0.0));
-        assert_eq!(height_map.world_to_raster(100.0, 100.0), (100.0, 100.0));
-        assert_eq!(height_map.world_to_raster(-100.0, 100.0), (0.0, 100.0));
     }
 }

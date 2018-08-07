@@ -19,7 +19,7 @@ use gdal::spatial_ref::{CoordTransform, SpatialRef};
 use std::f64::EPSILON;
 use std::path::Path;
 
-use math::Vec3;
+use math::{AffineTransform, Vec3};
 use textures::Texture;
 
 pub struct GdalRasterImporter;
@@ -45,7 +45,7 @@ impl GdalRasterImporter {
     pub fn import(
         path: &Path,
         band: usize,
-    ) -> Result<(String, [f64; 4], Texture<f64>)> {
+    ) -> Result<(String, AffineTransform, Texture<f64>)> {
         let dataset = try!(Dataset::open(path));
         let raster = try!(dataset.rasterband(band as isize));
         let transform = try!(dataset.geo_transform());
@@ -60,7 +60,8 @@ impl GdalRasterImporter {
         let y_origin = transform[3] * -1.0;
         let pixel_width = transform[1];
         let pixel_height = transform[5] * -1.0;
-        let transform = [x_origin, y_origin, pixel_width, pixel_height];
+        let transform =
+            AffineTransform::new(x_origin, y_origin, pixel_width, pixel_height);
 
         let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
         let proj4 = try!(spat_ref.to_proj4());
@@ -75,7 +76,7 @@ impl GdalRasterImporter {
         nw: (f64, f64),
         se: (f64, f64),
         inp_proj4: &str,
-    ) -> Result<(String, [f64; 4], Texture<f64>)> {
+    ) -> Result<(String, AffineTransform, Texture<f64>)> {
         let dataset = try!(Dataset::open(path));
         let raster = try!(dataset.rasterband(band as isize));
         let transform = try!(dataset.geo_transform());
@@ -99,7 +100,8 @@ impl GdalRasterImporter {
         let pixel_height = transform[5] * -1.0;
         let x_origin = transform[0] + (x1 as f64 * transform[1]);
         let y_origin = (transform[3] + (y1 as f64 * transform[5])) * -1.0;
-        let transform = [x_origin, y_origin, pixel_width, pixel_height];
+        let transform =
+            AffineTransform::new(x_origin, y_origin, pixel_width, pixel_height);
 
         Ok((proj4, transform, Texture::new(width, height, data)))
     }
