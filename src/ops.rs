@@ -14,6 +14,7 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 use math::{Color, Vec3};
+use std::f64::consts::PI;
 use std::ops::Mul;
 use textures::Texture;
 
@@ -221,6 +222,56 @@ pub fn curvature(
     })
 }
 
+/// Create a hillshade of a height map
+///
+/// See explanation [here][1].
+///
+/// [1]: https://pro.arcgis.com/en/pro-app/tool-reference/3d-analyst/
+/// how-hillshade-works.htm
+pub fn hillshade(
+    input: &Texture<f64>,
+    output: &mut Texture<f64>,
+    azimuth: f64,
+    altitude: f64,
+    pixel_size: f64,
+) {
+    let zenith_deg = 90.0 - altitude;
+    let zenith_rad = zenith_deg.to_radians();
+
+    let mut azimuth_math = 360.0 - azimuth + 90.0;
+    if azimuth_math >= 360.0 {
+        azimuth_math -= 360.0;
+    }
+
+    let azimuth_rad = azimuth_math.to_radians();
+
+    let cell_size = 8.0 * pixel_size;
+    operator3x3(input, output, |window| {
+        let [a, b, c, d, _, f, g, h, i] = window;
+        let dzdx = ((c + (2.0 * f) + i) - (a + (2.0 * d) + g)) / cell_size;
+        let dzdy = ((g + (2.0 * h) + i) - (a + (2.0 * b) + c)) / cell_size;
+        let rise_run = (dzdx.powi(2) + dzdy.powi(2)).sqrt();
+        let slope_rad = rise_run.atan();
+
+        let mut aspect_rad = 0.0;
+        if dzdx != 0.0 {
+            aspect_rad = dzdy.atan2(-dzdx);
+            if aspect_rad < 0.0 {
+                aspect_rad += 2.0 * PI;
+            }
+        } else if dzdy > 0.0 {
+            aspect_rad = PI / 2.0;
+        } else if dzdy < 0.0 {
+            aspect_rad = 2.0 * PI + -(PI / 2.0);
+        }
+
+        zenith_rad.cos() * slope_rad.cos()
+            + zenith_rad.sin()
+                * slope_rad.sin()
+                * (azimuth_rad - aspect_rad).cos()
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -346,5 +397,19 @@ mod tests {
         ]);
         assert_eq!(bilinear_patches_mipmap1.buffer, [7.0, 12.0, 8.0, 13.0]);
         assert_eq!(bilinear_patches_mipmap2.buffer, [13.0]);
+    }
+
+    #[test]
+    fn test_hillshade_calculation() {
+        let mut output = Texture::blank(3, 3);
+        #[cfg_attr(rustfmt, rustfmt_skip)]
+        let input = Texture::new(3, 3, vec![
+            2450.0, 2461.0, 2483.0,
+            2452.0, 2461.0, 2483.0,
+            2447.0, 2455.0, 2477.0,
+        ]);
+        hillshade(&input, &mut output, 315.0, 45.0, 5.0);
+        let result = output.lookup1x1(1, 1);
+        assert_eq!((result * 255.0).round() as usize, 154);
     }
 }
