@@ -156,7 +156,7 @@ pub fn linear_to_srgb(input: &Texture<Vec3>, output: &mut Texture<Color>) {
 }
 
 /// Apply a lowpass filter to a surface
-pub fn lowpass<T>(input: &Texture<f64>, output: &mut Texture<f64>) {
+pub fn lowpass(input: &Texture<f64>, output: &mut Texture<f64>) {
     let weight = 1.0 / 9.0;
     operator3x3(input, output, |window| {
         window.iter().map(|val| val * weight).sum()
