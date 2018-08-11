@@ -16,8 +16,9 @@
 use std::f64::INFINITY;
 
 use cameras::Camera;
-use math::{Ray, Vec3};
+use math::{AffineTransform, Ray, Vec3};
 use samplers::RegularGridSampler;
+use textures::{Bilinear, Texture};
 
 pub trait Intersectable {
     /// Object ray intersection test
@@ -50,6 +51,12 @@ pub struct BasicMaterial {
 
 #[derive(Copy, Clone, Debug, Default)]
 pub struct NormalMaterial;
+
+#[derive(Clone, Debug, Default)]
+pub struct TextureMaterial {
+    transform: AffineTransform,
+    texture: Texture<Vec3>,
+}
 
 pub struct Object {
     geometry: Box<Intersectable>,
@@ -121,6 +128,23 @@ impl BasicMaterial {
 impl Material for BasicMaterial {
     fn shade(&self, _: Ray, _: Intersection) -> Vec3 {
         self.color
+    }
+}
+
+impl TextureMaterial {
+    pub fn new(
+        transform: AffineTransform,
+        texture: Texture<Vec3>,
+    ) -> TextureMaterial {
+        TextureMaterial { transform, texture }
+    }
+}
+
+impl Material for TextureMaterial {
+    fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3 {
+        let point = ray.origin + ray.direction * intersection.t;
+        let (u, v) = self.transform.inverse(point.x, point.z);
+        self.texture.bilinear(u, v)
     }
 }
 
