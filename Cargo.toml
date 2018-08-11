@@ -9,3 +9,4 @@ name = "peaks"
 [dependencies]
 bmp = "0.4.0"
 gdal = "0.4.0"
+png = "0.12.0"

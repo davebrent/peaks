@@ -15,6 +15,7 @@
 
 extern crate bmp;
 extern crate gdal;
+extern crate png;
 
 mod cameras;
 pub mod exec;
