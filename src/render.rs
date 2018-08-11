@@ -164,24 +164,7 @@ where
             } else {
                 let object = &self.scene.objects[index];
                 let material = &self.scene.materials[object.material];
-                let mut color = material.shade(ray, intersection);
-
-                let mut origin = ray.origin + ray.direction * intersection.t;
-                origin += intersection.normal * 0.0001;
-
-                for light in &self.scene.directional_lights {
-                    let shadow_ray = Ray::new(origin, light.direction);
-                    for obj in &self.scene.objects {
-                        if let Some(other) = obj.geometry.intersects(shadow_ray)
-                        {
-                            if other.t > 0.0 {
-                                color *= 0.4;
-                            }
-                        }
-                    }
-                }
-
-                color
+                material.shade(ray, intersection)
             };
 
             color += sub_color * weight;
