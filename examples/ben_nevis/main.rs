@@ -81,6 +81,7 @@ pub fn main() -> Result<()> {
     let mut height_map =
         Texture::blank(raw_height_data.width, raw_height_data.height);
     peaks::ops::scale(&raw_height_data, &mut height_map, vertical_exageration);
+
     let height_map = HeightMap::new(transform, &height_map);
 
     let scene = Scene {
@@ -105,8 +106,8 @@ pub fn main() -> Result<()> {
         &mut render_surface
     ));
     peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::export::PpmExporter::export(
-        &output_dir.clone().join("render.ppm"),
+    peaks::export::PngExporter::export(
+        &output_dir.clone().join("render.png"),
         &output,
     )
 }

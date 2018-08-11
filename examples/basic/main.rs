@@ -88,8 +88,8 @@ pub fn main() -> Result<()> {
         &mut render_surface
     ));
     peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::export::PpmExporter::export(
-        &output_dir.clone().join("render.ppm"),
+    peaks::export::PngExporter::export(
+        &output_dir.clone().join("render.png"),
         &output,
     )
 }
