@@ -156,6 +156,25 @@ pub fn linear_to_srgb(input: &Texture<Vec3>, output: &mut Texture<Color>) {
     })
 }
 
+/// Convert sRGB colors to linear
+pub fn srgb_to_linear(input: &Texture<Color>, output: &mut Texture<Vec3>) {
+    let decode = |component: f64| {
+        if component <= 0.04045 {
+            component / 12.92
+        } else {
+            ((component + 0.055) / 1.055).powf(2.4)
+        }
+    };
+
+    operator1x1(input, output, |val| {
+        Vec3::new(
+            decode(f64::from(val.r) / 255.0),
+            decode(f64::from(val.g) / 255.0),
+            decode(f64::from(val.b) / 255.0),
+        )
+    })
+}
+
 /// Apply a lowpass filter to a surface
 pub fn lowpass(input: &Texture<f64>, output: &mut Texture<f64>) {
     let weight = 1.0 / 9.0;
@@ -411,5 +430,18 @@ mod tests {
         hillshade(&input, &mut output, 315.0, 45.0, 5.0);
         let result = output.lookup1x1(1, 1);
         assert_eq!((result * 255.0).round() as usize, 154);
+    }
+
+    #[test]
+    fn test_srgb_transforms() {
+        let input = Texture::new(1, 1, vec![Vec3::new(0.5, 0.5, 0.5)]);
+        let mut color = Texture::blank(1, 1);
+        let mut linear = Texture::blank(1, 1);
+        linear_to_srgb(&input, &mut color);
+        srgb_to_linear(&color, &mut linear);
+        assert_eq!(
+            (linear.lookup1x1(0, 0) * 100.0).round(),
+            (input.lookup1x1(0, 0) * 100.0).round(),
+        );
     }
 }
