@@ -13,27 +13,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-extern crate bmp;
-extern crate gdal;
-extern crate png;
+mod camera;
+mod orthographic;
+mod pinhole;
 
-mod cameras;
-pub mod exec;
-pub mod export;
-pub mod import;
-mod math;
-pub mod ops;
-mod primitives;
-mod render;
-mod samplers;
-mod textures;
-
-pub use cameras::{OrthographicCamera, PinholeCamera};
-pub use math::{AffineTransform, Color, Ray, Vec3};
-pub use primitives::{Aabb, BilinearPatch, HeightMap, Plane, Sphere};
-pub use render::{
-    BasicMaterial, DirectionalLight, Intersection, Material, NormalMaterial,
-    Object, Renderer, Scene, TextureMaterial,
-};
-pub use samplers::RegularGridSampler;
-pub use textures::Texture;
+pub use self::camera::Camera;
+pub use self::orthographic::OrthographicCamera;
+pub use self::pinhole::PinholeCamera;

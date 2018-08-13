@@ -13,18 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use super::camera::Camera;
 use math::{Ray, Vec3};
 
-pub trait Camera {
-    fn cast_ray(&self, x: f64, y: f64) -> Ray;
-}
-
 #[derive(Copy, Clone, Debug)]
-pub struct PinholeCamera {
+pub struct OrthographicCamera {
     position: Vec3,
     look_at: Vec3,
     up_axis: Vec3,
-    fov: f64,
     view_distance: f64,
     width: usize,
     height: usize,
@@ -32,29 +28,27 @@ pub struct PinholeCamera {
     u: Vec3,
     v: Vec3,
     w: Vec3,
+    view_plane_size: f64,
 }
 
-impl PinholeCamera {
+impl OrthographicCamera {
     pub fn new(
         width: usize,
         height: usize,
         position: Vec3,
         look_at: Vec3,
-        fov: f64,
         view_distance: f64,
         up_axis: Vec3,
-    ) -> PinholeCamera {
-        // Calculate the correct up vector for the up axis
+        view_plane_size: f64,
+    ) -> OrthographicCamera {
         let direction = Vec3::normalize(look_at - position);
         let right = Vec3::cross(direction, up_axis);
         let up = Vec3::cross(right, direction);
 
-        // Create the cameras coordinate system (ONB)
         let w = Vec3::normalize(position - look_at);
         let u = Vec3::cross(up, w);
         let v = Vec3::cross(w, u);
 
-        // Account for non-square aspect ratios
         let mut aspect = Vec3::new(1.0, 1.0, 1.0);
         if width > height {
             aspect.x = width as f64 / height as f64;
@@ -64,33 +58,31 @@ impl PinholeCamera {
             aspect.y = height as f64 / width as f64;
         }
 
-        PinholeCamera {
+        OrthographicCamera {
             width,
             height,
             position,
             look_at,
             up_axis,
-            fov,
             view_distance,
             aspect,
             u,
             v,
             w,
+            view_plane_size,
         }
     }
 }
 
-impl Camera for PinholeCamera {
+impl Camera for OrthographicCamera {
     fn cast_ray(&self, x: f64, y: f64) -> Ray {
-        // Raster to NDC space
         let mut px = x / self.width as f64 * 2.0 - 1.0;
         let mut py = 1.0 - y / self.height as f64 * 2.0;
 
-        // Account for aspect ratios and fov
-        px = px * self.aspect.x * self.fov;
-        py = py * self.aspect.y * self.fov;
+        px = px * self.aspect.x * self.view_plane_size;
+        py = py * self.aspect.y * self.view_plane_size;
 
-        let dir = self.u * px + self.v * py - self.w * self.view_distance;
-        Ray::new(self.position, Vec3::normalize(dir))
+        let position = self.u * px + self.v * py;
+        Ray::new(self.position + position, -self.w)
     }
 }
