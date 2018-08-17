@@ -11,7 +11,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 * [ ] Adding water bodies (possibly from shp file?)
 * [ ] Add a line string primitive for drawing paths
 * [ ] Add marker primitives
-* [ ] Terrain pre-processing raster operations (feature preserving smoothing)
+* [x] Terrain generalisation
 * [ ] Non photo realistic features outlines on the terrain
 * [ ] Aerial perspective
 * [ ] Documentation
@@ -24,6 +24,8 @@ Peaks is a (work in progress) tool for rendering 3d maps.
   Panoramas (Helen Jenny and Bernhard Jenny and William E Cartwright and
   Lorenz Hurni)
 * (2010) Terrain Sculptor: Generalizing Terrain Models for Relief Shading
+  (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
+* (2010) Automated Reduction of Visual Complexity in Small-Scale Relief Shading
   (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
 * (2008) Maximum Mipmaps for Fast, Accurate, and Scalable Dynamic Height Field
   Rendering (Art Tevs and Ivo Ihrke and Hans-Peter Seidel)

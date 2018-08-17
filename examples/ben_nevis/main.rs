@@ -15,6 +15,9 @@
 
 extern crate peaks;
 
+use peaks::ops::{
+    smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
+};
 use peaks::{
     DirectionalLight, HeightMap, NormalMaterial, Object, PinholeCamera,
     RegularGridSampler, Renderer, Scene, Texture, Vec3,
@@ -80,7 +83,37 @@ pub fn main() -> Result<()> {
 
     let mut height_map =
         Texture::blank(raw_height_data.width, raw_height_data.height);
-    peaks::ops::scale(&raw_height_data, &mut height_map, vertical_exageration);
+    let mut weights =
+        Texture::blank(raw_height_data.width, raw_height_data.height);
+    let mut smoothed =
+        Texture::blank(raw_height_data.width, raw_height_data.height);
+
+    let pixel_size = transform.unit_size().0;
+    let pre_smoothing = 46;
+    let post_smoothing = 5;
+    let slope_amp = 9.5;
+    let curve_amp = 1.0;
+    let positive_weights_amp = 1.0;
+    let negative_weights_amp = 3.5;
+    let exagerate = 0.25;
+
+    smooth(&raw_height_data, &mut smoothed, pre_smoothing);
+    terrain_generalise_weights(
+        &smoothed,
+        &mut weights,
+        pixel_size,
+        curve_amp,
+        slope_amp,
+        positive_weights_amp,
+        negative_weights_amp,
+        post_smoothing,
+    );
+    terrain_weighted_exaggeration(
+        &smoothed,
+        &mut height_map,
+        &weights,
+        exagerate,
+    );
 
     let height_map = HeightMap::new(transform, &height_map);
 

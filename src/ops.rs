@@ -15,7 +15,7 @@
 
 use math::{Color, Vec3};
 use std::f64::consts::PI;
-use std::ops::Mul;
+use std::ops::{Add, Mul};
 use textures::Texture;
 
 /// Map a function over each pixel in a texture
@@ -128,6 +128,14 @@ where
     operator1x1(input, output, |value| value * n)
 }
 
+/// Shift a surface by `n`
+pub fn shift<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
+where
+    T: Add<f64, Output = T> + Copy + Default,
+{
+    operator1x1(input, output, |value| value + n)
+}
+
 /// Unpack a texture as a floating point height map
 pub fn rgb_height_map(
     input: &Texture<Color>,
@@ -181,6 +189,32 @@ pub fn lowpass(input: &Texture<f64>, output: &mut Texture<f64>) {
     operator3x3(input, output, |window| {
         window.iter().map(|val| val * weight).sum()
     })
+}
+
+/// Apply a lowpass filter `N` times
+pub fn smooth(
+    input: &Texture<f64>,
+    output: &mut Texture<f64>,
+    iterations: usize,
+) {
+    assert_eq!(input.width, output.width);
+    assert_eq!(input.height, output.height);
+
+    let mut ping = Texture::blank(input.width, input.height);
+    let mut pong = Texture::blank(input.width, input.height);
+
+    scale(&input, &mut ping, 1.0);
+    for n in 0..iterations {
+        let (src, mut dest) = if n % 2 == 0 {
+            (&ping, &mut pong)
+        } else {
+            (&pong, &mut ping)
+        };
+        lowpass(&src, &mut dest);
+    }
+
+    let src = if iterations % 2 == 0 { &ping } else { &pong };
+    scale(&src, output, 1.0);
 }
 
 /// Calculate a surfaces normals
@@ -289,6 +323,60 @@ pub fn hillshade(
                 * slope_rad.sin()
                 * (azimuth_rad - aspect_rad).cos()
     })
+}
+
+pub fn terrain_generalise_weights(
+    input: &Texture<f64>,
+    output: &mut Texture<f64>,
+    pixel_size: f64,
+    curve_amp: f64,
+    slope_amp: f64,
+    positive_weights_amp: f64,
+    negative_weights_amp: f64,
+    post_smoothing: usize,
+) {
+    let width = input.width;
+    let height = input.height;
+
+    let mut sloped = Texture::blank(width, height);
+    let mut sloped_normalised = Texture::blank(width, height);
+    let mut curved = Texture::blank(width, height);
+    let mut curved_normalised = Texture::blank(width, height);
+    let mut weights = Texture::blank(width, height);
+
+    slope(&input, &mut sloped, pixel_size);
+    curvature(&input, &mut curved, pixel_size);
+
+    operator1x1(&curved, &mut curved_normalised, |v| (v * curve_amp));
+    operator1x1(&sloped, &mut sloped_normalised, |v| {
+        v.to_degrees() / 360.0 * slope_amp
+    });
+
+    for i in 0..weights.buffer.len() {
+        let slope = 1.0 - sloped_normalised.buffer[i];
+        let curvature = curved_normalised.buffer[i];
+        let gain = if curvature >= 0.0 {
+            positive_weights_amp
+        } else {
+            negative_weights_amp
+        };
+        weights.buffer[i] = (slope * curvature * gain).min(1.0).max(-1.0)
+    }
+
+    smooth(&weights, output, post_smoothing);
+}
+
+pub fn terrain_weighted_exaggeration(
+    input: &Texture<f64>,
+    output: &mut Texture<f64>,
+    weights: &Texture<f64>,
+    exagerate: f64,
+) {
+    for i in 0..output.buffer.len() {
+        let elevation = input.buffer[i];
+        let weight = weights.buffer[i];
+        output.buffer[i] = elevation + (elevation * exagerate * weight)
+    }
 }
 
 #[cfg(test)]
