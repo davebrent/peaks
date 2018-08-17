@@ -187,7 +187,15 @@ pub fn srgb_to_linear(input: &Texture<Color>, output: &mut Texture<Vec3>) {
 pub fn lowpass(input: &Texture<f64>, output: &mut Texture<f64>) {
     let weight = 1.0 / 9.0;
     operator3x3(input, output, |window| {
-        window.iter().map(|val| val * weight).sum()
+        window[0] * weight
+            + window[1] * weight
+            + window[2] * weight
+            + window[3] * weight
+            + window[4] * weight
+            + window[5] * weight
+            + window[6] * weight
+            + window[7] * weight
+            + window[8] * weight
     })
 }
 
