@@ -15,5 +15,6 @@
 
 pub mod bmp;
 pub mod gdal;
+pub mod gpx;
 pub mod png;
 pub mod ppm;
