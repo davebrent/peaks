@@ -15,6 +15,7 @@
 
 use math::{Ray, Vec3};
 use render::{Intersectable, Intersection};
+use std::f64::EPSILON;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Plane {
@@ -31,10 +32,11 @@ impl Plane {
 impl Intersectable for Plane {
     fn intersects(&self, ray: Ray) -> Option<Intersection> {
         let denom = Vec3::dot(self.normal, ray.direction);
-        if denom.abs() < 1e-6 {
+        if denom.abs() < EPSILON {
             return None;
         }
-        let t = (-self.distance - Vec3::dot(self.normal, ray.origin)) / denom;
+        let diff = self.normal * self.distance - ray.origin;
+        let t = Vec3::dot(diff, self.normal) / denom;
         Some(Intersection::new(t, self.normal))
     }
 }

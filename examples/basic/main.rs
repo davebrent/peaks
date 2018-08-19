@@ -37,7 +37,10 @@ pub fn main() -> Result<()> {
         }],
         materials: vec![Box::new(NormalMaterial::new())],
         objects: vec![
-            Object::new(Box::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), 5.0)), 0),
+            Object::new(
+                Box::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
+                0,
+            ),
             Object::new(
                 Box::new(Aabb::new(
                     Vec3::new(10.0, 0.0, 5.0),
