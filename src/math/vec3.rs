@@ -109,6 +109,36 @@ impl Vec3 {
             },
         )
     }
+
+    #[inline(always)]
+    pub fn rotate_x(&self, origin: Vec3, radians: f64) -> Vec3 {
+        let p = *self - origin;
+        Vec3::new(
+            p.x,
+            p.y * radians.cos() - p.z * radians.sin(),
+            p.y * radians.sin() + p.z * radians.cos(),
+        ) + origin
+    }
+
+    #[inline(always)]
+    pub fn rotate_y(&self, origin: Vec3, radians: f64) -> Vec3 {
+        let p = *self - origin;
+        Vec3::new(
+            p.z * radians.sin() + p.x * radians.cos(),
+            p.y,
+            p.z * radians.cos() - p.x * radians.sin(),
+        ) + origin
+    }
+
+    #[inline(always)]
+    pub fn rotate_z(&self, origin: Vec3, radians: f64) -> Vec3 {
+        let p = *self - origin;
+        Vec3::new(
+            p.x * radians.cos() - p.y * radians.sin(),
+            p.x * radians.sin() + p.y * radians.cos(),
+            p.z,
+        ) + origin
+    }
 }
 
 impl Add for Vec3 {
