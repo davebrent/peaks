@@ -15,11 +15,15 @@
 
 use bmp;
 use math::Color;
+use std::convert::AsRef;
 use std::path::Path;
 use textures::Texture;
 
-pub fn import(path: &Path) -> Texture<Color> {
-    let image = bmp::open(path).unwrap();
+pub fn import<T>(path: T) -> Texture<Color>
+where
+    T: AsRef<Path>,
+{
+    let image = bmp::open(path.as_ref()).unwrap();
     let width = image.get_width();
     let height = image.get_height();
 

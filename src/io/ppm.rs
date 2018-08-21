@@ -20,7 +20,10 @@ use std::path::Path;
 use math::Color;
 use textures::Texture;
 
-pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
+pub fn export<T>(path: T, texture: &Texture<Color>) -> Result<()>
+where
+    T: AsRef<Path>,
+{
     let width = texture.width;
     let height = texture.height;
 
@@ -31,7 +34,7 @@ pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
         bytes.push(color.b);
     }
 
-    let mut f = try!(File::create(file_path));
+    let mut f = try!(File::create(path.as_ref()));
     try!(f.write_all(format!("P6 {} {} 255\n", width, height).as_bytes()));
     f.write_all(&bytes)
 }

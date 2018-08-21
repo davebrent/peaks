@@ -15,12 +15,16 @@
 
 use math::Color;
 use png::{self, HasParameters};
+use std::convert::AsRef;
 use std::fs::File;
 use std::io::{BufWriter, Result};
 use std::path::Path;
 use textures::Texture;
 
-pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
+pub fn export<T>(path: T, texture: &Texture<Color>) -> Result<()>
+where
+    T: AsRef<Path>,
+{
     let width = texture.width as u32;
     let height = texture.height as u32;
 
@@ -31,7 +35,7 @@ pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
         bytes.push(color.b);
     }
 
-    let file = try!(File::create(file_path));
+    let file = try!(File::create(path.as_ref()));
     let writer = &mut BufWriter::new(file);
 
     let mut encoder = png::Encoder::new(writer, width, height);

@@ -16,6 +16,7 @@
 use gdal::errors::Result;
 use gdal::raster::{Dataset, RasterBand};
 use gdal::spatial_ref::SpatialRef;
+use std::convert::AsRef;
 use std::f64::EPSILON;
 use std::path::Path;
 
@@ -23,11 +24,14 @@ use math::{transform_coords, AffineTransform};
 use textures::Texture;
 
 /// Import an entire raster file
-pub fn import(
-    path: &Path,
+pub fn import<T>(
+    path: T,
     band: usize,
-) -> Result<(String, AffineTransform, Texture<f64>)> {
-    let dataset = try!(Dataset::open(path));
+) -> Result<(String, AffineTransform, Texture<f64>)>
+where
+    T: AsRef<Path>,
+{
+    let dataset = try!(Dataset::open(path.as_ref()));
     let raster = try!(dataset.rasterband(band as isize));
     let transform = try!(dataset.geo_transform());
     let (width, height) = dataset.size();
@@ -51,14 +55,17 @@ pub fn import(
 }
 
 /// Import a bounding box of a raster file
-pub fn import_bbox(
-    path: &Path,
+pub fn import_bbox<T>(
+    path: T,
     band: usize,
     nw: (f64, f64),
     se: (f64, f64),
     inp_proj4: &str,
-) -> Result<(String, AffineTransform, Texture<f64>)> {
-    let dataset = try!(Dataset::open(path));
+) -> Result<(String, AffineTransform, Texture<f64>)>
+where
+    T: AsRef<Path>,
+{
+    let dataset = try!(Dataset::open(path.as_ref()));
     let raster = try!(dataset.rasterband(band as isize));
     let transform = try!(dataset.geo_transform());
     let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
