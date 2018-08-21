@@ -15,32 +15,16 @@
 
 use gdal::errors::Result;
 use gdal::raster::{Dataset, RasterBand};
-use gdal::spatial_ref::{CoordTransform, SpatialRef};
+use gdal::spatial_ref::SpatialRef;
 use std::f64::EPSILON;
 use std::path::Path;
 
-use math::{AffineTransform, Vec3};
+use math::{transform_coords, AffineTransform};
 use textures::Texture;
 
 pub struct GdalRasterImporter;
 
 impl GdalRasterImporter {
-    /// Convert a point from one spatial reference to another
-    pub fn convert(point: Vec3, from_proj4: &str, to_proj4: &str) -> Vec3 {
-        let mut xs = [point.x];
-        let mut ys = [point.z];
-        let mut zs = [point.y];
-
-        let input = SpatialRef::from_proj4(from_proj4).unwrap();
-        let output = SpatialRef::from_proj4(to_proj4).unwrap();
-        let transform = CoordTransform::new(&input, &output).unwrap();
-        transform
-            .transform_coords(&mut xs, &mut ys, &mut zs)
-            .unwrap();
-
-        Vec3::new(xs[0], zs[0], ys[0])
-    }
-
     /// Import an entire raster file
     pub fn import(
         path: &Path,
@@ -83,11 +67,11 @@ impl GdalRasterImporter {
         let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
         let proj4 = try!(spat_ref.to_proj4());
 
-        let nw = Self::convert(Vec3::new(nw.0, 0.0, nw.1), inp_proj4, &proj4);
-        let se = Self::convert(Vec3::new(se.0, 0.0, se.1), inp_proj4, &proj4);
+        let nw = transform_coords(nw.0, nw.1, inp_proj4, &proj4);
+        let se = transform_coords(se.0, se.1, inp_proj4, &proj4);
 
-        let (x1, y1) = Self::world_to_raster(nw.x, nw.z, &transform);
-        let (x2, y2) = Self::world_to_raster(se.x, se.z, &transform);
+        let (x1, y1) = Self::world_to_raster(nw.0, nw.1, &transform);
+        let (x2, y2) = Self::world_to_raster(se.0, se.1, &transform);
         let width = (x2 - x1) as usize;
         let height = (y2 - y1) as usize;
 

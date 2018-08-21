@@ -13,30 +13,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-extern crate bmp;
-extern crate gdal;
-extern crate png;
+use gdal::spatial_ref::{CoordTransform, SpatialRef};
 
-mod cameras;
-pub mod exec;
-pub mod export;
-pub mod import;
-mod materials;
-mod math;
-pub mod ops;
-mod primitives;
-mod render;
-mod samplers;
-mod scene;
-mod textures;
+/// Convert a point from one spatial reference to another
+pub fn transform_coords(
+    lat: f64,
+    lon: f64,
+    src: &str,
+    dest: &str,
+) -> (f64, f64) {
+    let mut xs = [lat];
+    let mut ys = [lon];
+    let mut zs = [0.0];
 
-pub use cameras::{OrthographicCamera, PinholeCamera};
-pub use materials::{BasicMaterial, Material, NormalMaterial, TextureMaterial};
-pub use math::{transform_coords, AffineTransform, Color, Ray, Vec3};
-pub use primitives::{
-    Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,
-};
-pub use render::Renderer;
-pub use samplers::RegularGridSampler;
-pub use scene::{Object, Scene};
-pub use textures::{Bilinear, Texture};
+    let input = SpatialRef::from_proj4(src).unwrap();
+    let output = SpatialRef::from_proj4(dest).unwrap();
+    let transform = CoordTransform::new(&input, &output).unwrap();
+    transform
+        .transform_coords(&mut xs, &mut ys, &mut zs)
+        .unwrap();
+
+    (xs[0], ys[0])
+}

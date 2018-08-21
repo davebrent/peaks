@@ -19,8 +19,8 @@ use peaks::ops::{
     scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
 };
 use peaks::{
-    HeightMap, NormalMaterial, Object, PinholeCamera, RegularGridSampler,
-    Renderer, Scene, Texture, Vec3,
+    transform_coords, HeightMap, NormalMaterial, Object, PinholeCamera,
+    RegularGridSampler, Renderer, Scene, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -81,25 +81,26 @@ pub fn main() -> Result<()> {
     scale(&exagerated, &mut height_map, vertical_exageration);
 
     let camera_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-    let mut camera_position = peaks::import::GdalRasterImporter::convert(
-        Vec3::new(17.340803146362305, 2000.0, 42.77064408352934),
-        &camera_proj4,
-        &proj4,
-    );
-    let mut camera_look_at = peaks::import::GdalRasterImporter::convert(
-        Vec3::new(17.351274490356445, 0.0, 42.78267713877303),
+
+    let (eye_lat, eye_lon) = transform_coords(
+        17.340803146362305,
+        42.77064408352934,
         &camera_proj4,
         &proj4,
     );
 
-    camera_position.z *= -1.0;
-    camera_look_at.z *= -1.0;
+    let (look_lat, look_lon) = transform_coords(
+        17.351274490356445,
+        42.78267713877303,
+        &camera_proj4,
+        &proj4,
+    );
 
     let camera = PinholeCamera::new(
         width,
         height,
-        camera_position,
-        camera_look_at,
+        Vec3::new(eye_lat, 2_000.0, eye_lon * -1.0),
+        Vec3::new(look_lat, 0.0, look_lon * -1.0),
         90.0_f64.to_radians(),
         1.0,
         Vec3::new(0.0, 1.0, 0.0),

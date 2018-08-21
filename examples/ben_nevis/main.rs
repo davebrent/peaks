@@ -19,8 +19,8 @@ use peaks::ops::{
     smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
 };
 use peaks::{
-    HeightMap, NormalMaterial, Object, PinholeCamera, RegularGridSampler,
-    Renderer, Scene, Texture, Vec3,
+    transform_coords, HeightMap, NormalMaterial, Object, PinholeCamera,
+    RegularGridSampler, Renderer, Scene, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -30,7 +30,6 @@ pub fn main() -> Result<()> {
     let width = 1260 * 1;
     let height = 540 * 1;
     let num_samples = 4;
-    let vertical_exageration = 1.0;
 
     let cwd = Path::new(file!()).parent().unwrap();
     let output_dir = cwd.clone().join("output");
@@ -50,33 +49,25 @@ pub fn main() -> Result<()> {
             &camera_proj4,
         ).unwrap();
 
-    let mut camera_position = peaks::import::GdalRasterImporter::convert(
-        Vec3::new(
-            -5.000324249267579,
-            3_000.0 * vertical_exageration,
-            56.77201127687461,
-        ),
-        &camera_proj4,
-        &proj4,
-    );
-    let mut camera_look_at = peaks::import::GdalRasterImporter::convert(
-        Vec3::new(
-            -4.993972778320313,
-            1_300.0 * vertical_exageration,
-            56.81281355548693,
-        ),
+    let (eye_lat, eye_lon) = transform_coords(
+        -5.000324249267579,
+        56.77201127687461,
         &camera_proj4,
         &proj4,
     );
 
-    camera_position.z *= -1.0;
-    camera_look_at.z *= -1.0;
+    let (look_lat, look_lon) = transform_coords(
+        -4.993972778320313,
+        56.81281355548693,
+        &camera_proj4,
+        &proj4,
+    );
 
     let camera = PinholeCamera::new(
         width,
         height,
-        camera_position,
-        camera_look_at,
+        Vec3::new(eye_lat, 3_000.0, eye_lon * -1.0),
+        Vec3::new(look_lat, 1_300.0, look_lon * -1.0),
         40.0_f64.to_radians(),
         1.0,
         Vec3::new(0.0, 1.0, 0.0),
