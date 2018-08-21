@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
-use render::{Intersectable, Intersection};
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Sphere {
@@ -28,7 +28,7 @@ impl Sphere {
     }
 }
 
-impl Intersectable for Sphere {
+impl Primitive for Sphere {
     fn intersects(&self, ray: Ray) -> Option<Intersection> {
         let o = ray.origin - self.position;
         let a = Vec3::dot(ray.direction, ray.direction);

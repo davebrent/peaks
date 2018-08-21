@@ -13,13 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use math::Color;
+use png::{self, HasParameters};
 use std::fs::File;
 use std::io::{BufWriter, Result};
 use std::path::Path;
-
-use png::{self, HasParameters};
-
-use math::Color;
 use textures::Texture;
 
 pub struct PngExporter;

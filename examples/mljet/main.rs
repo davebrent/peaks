@@ -19,11 +19,12 @@ use peaks::ops::{
     scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
 };
 use peaks::{
-    DirectionalLight, HeightMap, NormalMaterial, Object, PinholeCamera,
-    RegularGridSampler, Renderer, Scene, Texture, Vec3,
+    HeightMap, NormalMaterial, Object, PinholeCamera, RegularGridSampler,
+    Renderer, Scene, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
+use std::sync::Arc;
 
 pub fn main() -> Result<()> {
     let width = 960;
@@ -108,11 +109,9 @@ pub fn main() -> Result<()> {
 
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
-        objects: vec![Object::new(Box::new(height_map), 0)],
-        materials: vec![Box::new(NormalMaterial::new())],
-        directional_lights: vec![DirectionalLight {
-            direction: Vec3::normalize(Vec3::new(2.0, 20.0, 3.0)),
-        }],
+        objects: vec![Object::new(0, 0)],
+        materials: vec![Arc::new(NormalMaterial::new())],
+        primitives: vec![Arc::new(height_map)],
     };
 
     let sampler = RegularGridSampler::new(num_samples);

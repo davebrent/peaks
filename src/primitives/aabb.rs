@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
-use render::{Intersectable, Intersection};
 use std::f64::INFINITY;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -37,7 +37,7 @@ impl Aabb {
     }
 }
 
-impl Intersectable for Aabb {
+impl Primitive for Aabb {
     fn intersects(&self, ray: Ray) -> Option<Intersection> {
         let bounds = [self.min, self.max];
 

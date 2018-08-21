@@ -21,6 +21,7 @@ use peaks::{
 };
 use std::io::Result;
 use std::path::Path;
+use std::sync::Arc;
 
 pub fn main() -> Result<()> {
     let cwd = Path::new(file!()).parent().unwrap();
@@ -60,63 +61,55 @@ pub fn main() -> Result<()> {
 
     let scene = Scene {
         background: Vec3::new(1.0, 1.0, 1.0),
-        directional_lights: vec![],
         materials: vec![
-            Box::new(NormalMaterial::new()),
-            Box::new(BasicMaterial::new(Vec3::new(0.1, 0.8, 0.8))),
-            Box::new(BasicMaterial::new(Vec3::new(1.0, 0.0, 0.0))),
-            Box::new(BasicMaterial::new(Vec3::new(0.0, 1.0, 0.0))),
+            Arc::new(NormalMaterial::new()),
+            Arc::new(BasicMaterial::new(Vec3::new(0.1, 0.8, 0.8))),
+            Arc::new(BasicMaterial::new(Vec3::new(1.0, 0.0, 0.0))),
+            Arc::new(BasicMaterial::new(Vec3::new(0.0, 1.0, 0.0))),
+        ],
+        primitives: vec![
+            Arc::new(Sphere::new(
+                Vec3::new(
+                    -(mono_map.width as f64 / 2.0),
+                    0.0,
+                    -(mono_map.height as f64 / 2.0),
+                ),
+                2.0,
+            )),
+            Arc::new(Sphere::new(
+                Vec3::new(
+                    mono_map.width as f64 / 2.0,
+                    0.0,
+                    -(mono_map.height as f64 / 2.0),
+                ),
+                2.0,
+            )),
+            Arc::new(Sphere::new(
+                Vec3::new(
+                    mono_map.width as f64 / 2.0,
+                    0.0,
+                    mono_map.height as f64 / 2.0,
+                ),
+                2.0,
+            )),
+            Arc::new(Sphere::new(
+                Vec3::new(
+                    -(mono_map.width as f64 / 2.0),
+                    0.0,
+                    mono_map.height as f64 / 2.0,
+                ),
+                2.0,
+            )),
+            Arc::new(Sphere::new(Vec3::new(0.0, 20.0, 0.0), 10.0)),
+            Arc::new(height_map),
         ],
         objects: vec![
-            Object::new(
-                Box::new(Sphere::new(
-                    Vec3::new(
-                        -(mono_map.width as f64 / 2.0),
-                        0.0,
-                        -(mono_map.height as f64 / 2.0),
-                    ),
-                    2.0,
-                )),
-                2,
-            ), // nw
-            Object::new(
-                Box::new(Sphere::new(
-                    Vec3::new(
-                        mono_map.width as f64 / 2.0,
-                        0.0,
-                        -(mono_map.height as f64 / 2.0),
-                    ),
-                    2.0,
-                )),
-                0,
-            ), // ne
-            Object::new(
-                Box::new(Sphere::new(
-                    Vec3::new(
-                        mono_map.width as f64 / 2.0,
-                        0.0,
-                        mono_map.height as f64 / 2.0,
-                    ),
-                    2.0,
-                )),
-                3,
-            ), // se
-            Object::new(
-                Box::new(Sphere::new(
-                    Vec3::new(
-                        -(mono_map.width as f64 / 2.0),
-                        0.0,
-                        mono_map.height as f64 / 2.0,
-                    ),
-                    2.0,
-                )),
-                0,
-            ), // sw
-            Object::new(
-                Box::new(Sphere::new(Vec3::new(0.0, 20.0, 0.0), 10.0)),
-                1,
-            ),
-            Object::new(Box::new(height_map), 0),
+            Object::new(0, 2), // nw
+            Object::new(1, 0), // ne
+            Object::new(2, 3), // se
+            Object::new(3, 0), // sw
+            Object::new(4, 1),
+            Object::new(4, 0),
         ],
     };
 

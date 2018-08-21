@@ -21,19 +21,22 @@ mod cameras;
 pub mod exec;
 pub mod export;
 pub mod import;
+mod materials;
 mod math;
 pub mod ops;
 mod primitives;
 mod render;
 mod samplers;
+mod scene;
 mod textures;
 
 pub use cameras::{OrthographicCamera, PinholeCamera};
+pub use materials::{BasicMaterial, Material, NormalMaterial, TextureMaterial};
 pub use math::{AffineTransform, Color, Ray, Vec3};
-pub use primitives::{Aabb, BilinearPatch, HeightMap, Plane, Sphere};
-pub use render::{
-    BasicMaterial, DirectionalLight, Intersection, Material, NormalMaterial,
-    Object, Renderer, Scene, TextureMaterial,
+pub use primitives::{
+    Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,
 };
+pub use render::Renderer;
 pub use samplers::RegularGridSampler;
-pub use textures::Texture;
+pub use scene::{Object, Scene};
+pub use textures::{Bilinear, Texture};

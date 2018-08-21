@@ -13,30 +13,41 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
-use std::f64::EPSILON;
+use std::f64::INFINITY;
+
+pub trait Primitive {
+    /// Object ray intersection test
+    fn intersects(&self, ray: Ray) -> Option<Intersection>;
+}
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
-pub struct Plane {
-    normal: Vec3,
-    distance: f64,
+pub struct Intersection {
+    pub t: f64,
+    pub normal: Vec3,
 }
 
-impl Plane {
-    pub fn new(normal: Vec3, distance: f64) -> Plane {
-        Plane { normal, distance }
+impl Intersection {
+    pub fn new(t: f64, normal: Vec3) -> Intersection {
+        Intersection { t, normal }
     }
-}
 
-impl Primitive for Plane {
-    fn intersects(&self, ray: Ray) -> Option<Intersection> {
-        let denom = Vec3::dot(self.normal, ray.direction);
-        if denom.abs() < EPSILON {
-            return None;
+    pub fn none() -> Intersection {
+        Intersection {
+            t: INFINITY,
+            normal: Vec3::zeros(),
         }
-        let diff = self.normal * self.distance - ray.origin;
-        let t = Vec3::dot(diff, self.normal) / denom;
-        Some(Intersection::new(t, self.normal))
+    }
+
+    pub fn is_none(&self) -> bool {
+        self.t == INFINITY
+    }
+
+    pub fn to_option(&self) -> Option<Intersection> {
+        if self.is_none() {
+            None
+        } else {
+            Some(*self)
+        }
     }
 }

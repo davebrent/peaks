@@ -15,13 +15,19 @@
 
 use super::aabb::Aabb;
 use super::bilinear_patch::BilinearPatch;
-use math::{ceil_pow2, AffineTransform, Ray, Vec3};
+use super::primitive::{Intersection, Primitive};
+use math::{AffineTransform, Ray, Vec3};
 use ops::{
     blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch, normals,
 };
-use render::{Intersectable, Intersection};
 use std::cmp;
 use textures::{Bilinear, Texture};
+
+fn ceil_pow2(num: usize) -> usize {
+    let num = num as f64;
+    let exp = (num.log2() / 2.0_f64.log2()).ceil();
+    2.0_f64.powf(exp) as usize
+}
 
 pub struct HeightMap {
     /// A transform from world space coordinates to raster space
@@ -83,7 +89,7 @@ impl HeightMap {
     }
 }
 
-impl Intersectable for HeightMap {
+impl Primitive for HeightMap {
     fn intersects(&self, ray: Ray) -> Option<Intersection> {
         if self.maximum_mipmaps.is_empty() {
             return None;

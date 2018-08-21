@@ -13,8 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
-use render::{Intersectable, Intersection};
 
 pub struct BilinearPatch {
     p00: Vec3,
@@ -138,7 +138,7 @@ impl BilinearPatch {
     }
 }
 
-impl Intersectable for BilinearPatch {
+impl Primitive for BilinearPatch {
     fn intersects(&self, ray: Ray) -> Option<Intersection> {
         let vars = {
             let a = self.p11 - self.p10 - self.p01 + self.p00;

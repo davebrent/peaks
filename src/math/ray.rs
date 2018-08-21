@@ -13,16 +13,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-mod aabb;
-mod bilinear_patch;
-mod height_map;
-mod plane;
-mod primitive;
-mod sphere;
+use super::vec3::Vec3;
+use std::fmt;
 
-pub use self::aabb::Aabb;
-pub use self::bilinear_patch::BilinearPatch;
-pub use self::height_map::HeightMap;
-pub use self::plane::Plane;
-pub use self::primitive::{Intersection, Primitive};
-pub use self::sphere::Sphere;
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub struct Ray {
+    pub origin: Vec3,
+    pub direction: Vec3,
+}
+
+impl fmt::Display for Ray {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "(origin: {}, direction: {})",
+            self.origin, self.direction
+        )
+    }
+}
+
+impl Ray {
+    pub fn new(origin: Vec3, direction: Vec3) -> Ray {
+        Ray { origin, direction }
+    }
+}

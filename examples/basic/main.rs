@@ -16,12 +16,12 @@
 extern crate peaks;
 
 use peaks::{
-    Aabb, BilinearPatch, DirectionalLight, NormalMaterial, Object,
-    PinholeCamera, Plane, RegularGridSampler, Renderer, Scene, Sphere, Texture,
-    Vec3,
+    Aabb, BilinearPatch, NormalMaterial, Object, PinholeCamera, Plane,
+    RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
+use std::sync::Arc;
 
 pub fn main() -> Result<()> {
     let cwd = Path::new(file!()).parent().unwrap();
@@ -32,39 +32,28 @@ pub fn main() -> Result<()> {
 
     let scene = Scene {
         background: Vec3::new(1.0, 1.0, 1.0),
-        directional_lights: vec![DirectionalLight {
-            direction: Vec3::normalize(Vec3::new(2.0, 10.0, 3.0)),
-        }],
-        materials: vec![Box::new(NormalMaterial::new())],
+        materials: vec![Arc::new(NormalMaterial::new())],
+        primitives: vec![
+            Arc::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
+            Arc::new(Aabb::new(
+                Vec3::new(10.0, 0.0, 5.0),
+                Vec3::new(16.0, 6.0, 11.0),
+            )),
+            Arc::new(Sphere::new(Vec3::new(0.0, 0.0, 0.0), 5.0)),
+            Arc::new(Sphere::new(Vec3::new(-10.0, 5.0, 5.0), 1.5)),
+            Arc::new(BilinearPatch::new(
+                Vec3::new(-5.0 - 15.0, 0.0 + 8.0, -5.0), // nw
+                Vec3::new(5.0 - 15.0, 0.0 + 8.0, -5.0),  // ne
+                Vec3::new(5.0 - 15.0, 5.0 - 8.0, 5.0),   // se
+                Vec3::new(-5.0 - 15.0, 0.0 + 8.0, 5.0),  // sw
+            )),
+        ],
         objects: vec![
-            Object::new(
-                Box::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
-                0,
-            ),
-            Object::new(
-                Box::new(Aabb::new(
-                    Vec3::new(10.0, 0.0, 5.0),
-                    Vec3::new(16.0, 6.0, 11.0),
-                )),
-                0,
-            ),
-            Object::new(
-                Box::new(Sphere::new(Vec3::new(0.0, 0.0, 0.0), 5.0)),
-                0,
-            ),
-            Object::new(
-                Box::new(Sphere::new(Vec3::new(-10.0, 5.0, 5.0), 1.5)),
-                0,
-            ),
-            Object::new(
-                Box::new(BilinearPatch::new(
-                    Vec3::new(-5.0 - 15.0, 0.0 + 8.0, -5.0), // nw
-                    Vec3::new(5.0 - 15.0, 0.0 + 8.0, -5.0),  // ne
-                    Vec3::new(5.0 - 15.0, 5.0 - 8.0, 5.0),   // se
-                    Vec3::new(-5.0 - 15.0, 0.0 + 8.0, 5.0),  // sw
-                )),
-                0,
-            ),
+            Object::new(0, 0),
+            Object::new(1, 0),
+            Object::new(2, 0),
+            Object::new(3, 0),
+            Object::new(4, 0),
         ],
     };
 

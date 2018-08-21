@@ -19,73 +19,6 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
-/// Round to the nearest power of two
-pub fn ceil_pow2(num: usize) -> usize {
-    let num = num as f64;
-    let exp = (num.log2() / 2.0_f64.log2()).ceil();
-    2.0_f64.powf(exp) as usize
-}
-
-/// Represents a simple linear transformation
-#[derive(Debug, Copy, Clone, PartialEq)]
-pub struct AffineTransform {
-    transform: [f64; 4],
-}
-
-impl AffineTransform {
-    pub fn new(e: f64, f: f64, a: f64, d: f64) -> AffineTransform {
-        AffineTransform {
-            transform: [e, f, a, d],
-        }
-    }
-
-    /// Return the result of the transform
-    #[inline(always)]
-    pub fn forward(&self, x: f64, y: f64) -> (f64, f64) {
-        let [e, f, a, d] = self.transform;
-        let x = e + x * a;
-        let y = f + y * d;
-        (x, y)
-    }
-
-    /// Return the transformation across quadtree levels
-    #[inline(always)]
-    pub fn quadtree(&self, level: usize, x: f64, y: f64) -> (f64, f64) {
-        let [e, f, a, d] = self.transform;
-        let a = a * (2_usize.pow(level as u32) as f64);
-        let d = d * (2_usize.pow(level as u32) as f64);
-        (e + x * a, f + y * d)
-    }
-
-    /// Return the inverse of the transform
-    #[inline(always)]
-    pub fn inverse(&self, x: f64, y: f64) -> (f64, f64) {
-        let [e, f, a, d] = self.transform;
-        let x = (x - e) / a;
-        let y = (y - f) / d;
-        (x, y)
-    }
-
-    /// Return the x/y units size of the transform
-    #[inline(always)]
-    pub fn unit_size(&self) -> (f64, f64) {
-        (self.transform[2], self.transform[3])
-    }
-}
-
-impl Default for AffineTransform {
-    fn default() -> AffineTransform {
-        AffineTransform::new(0.0, 0.0, 1.0, 1.0)
-    }
-}
-
-#[derive(Debug, Default, Copy, Clone, PartialEq)]
-pub struct Color {
-    pub r: u8,
-    pub g: u8,
-    pub b: u8,
-}
-
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Vec3 {
     pub x: f64,
@@ -93,69 +26,9 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
-pub struct Ray {
-    pub origin: Vec3,
-    pub direction: Vec3,
-}
-
-impl fmt::Display for Color {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "({}, {}, {})", self.r, self.g, self.b)
-    }
-}
-
 impl fmt::Display for Vec3 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "({:.4}, {:.4}, {:.4})", self.x, self.y, self.z)
-    }
-}
-
-impl fmt::Display for Ray {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(
-            f,
-            "(origin: {}, direction: {})",
-            self.origin, self.direction
-        )
-    }
-}
-
-impl Color {
-    pub fn new(r: u8, g: u8, b: u8) -> Color {
-        Color { r, g, b }
-    }
-}
-
-impl Add for Color {
-    type Output = Color;
-
-    #[inline(always)]
-    fn add(self, rhs: Color) -> Color {
-        Color {
-            r: self.r + rhs.r,
-            g: self.g + rhs.g,
-            b: self.b + rhs.b,
-        }
-    }
-}
-
-impl Mul<f64> for Color {
-    type Output = Color;
-
-    #[inline(always)]
-    fn mul(self, rhs: f64) -> Color {
-        Color {
-            r: (f64::from(self.r) * rhs).round().min(255.0) as u8,
-            g: (f64::from(self.g) * rhs).round().min(255.0) as u8,
-            b: (f64::from(self.b) * rhs).round().min(255.0) as u8,
-        }
-    }
-}
-
-impl Ray {
-    pub fn new(origin: Vec3, direction: Vec3) -> Ray {
-        Ray { origin, direction }
     }
 }
 
@@ -376,14 +249,5 @@ mod tests {
         let b = Vec3::new(0.0, 0.0, 20.0);
         assert_eq!(Vec3::distance(a, b), 10.0);
         assert_eq!(Vec3::distance(b, a), 10.0);
-    }
-
-    #[test]
-    fn inverse_affine_transforms() {
-        let t = AffineTransform::new(-100.0, -100.0, 2.0, 2.0);
-        assert_eq!(t.inverse(-100.0, -100.0), (0.0, 0.0));
-        assert_eq!(t.inverse(100.0, -100.0), (100.0, 0.0));
-        assert_eq!(t.inverse(100.0, 100.0), (100.0, 100.0));
-        assert_eq!(t.inverse(-100.0, 100.0), (0.0, 100.0));
     }
 }
