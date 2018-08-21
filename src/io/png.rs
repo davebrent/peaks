@@ -20,28 +20,24 @@ use std::io::{BufWriter, Result};
 use std::path::Path;
 use textures::Texture;
 
-pub struct PngExporter;
+pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
+    let width = texture.width as u32;
+    let height = texture.height as u32;
 
-impl PngExporter {
-    pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
-        let width = texture.width as u32;
-        let height = texture.height as u32;
-
-        let mut bytes = Vec::with_capacity((width * height * 3) as usize);
-        for color in &texture.buffer {
-            bytes.push(color.r);
-            bytes.push(color.g);
-            bytes.push(color.b);
-        }
-
-        let file = try!(File::create(file_path));
-        let writer = &mut BufWriter::new(file);
-
-        let mut encoder = png::Encoder::new(writer, width, height);
-        encoder.set(png::ColorType::RGB).set(png::BitDepth::Eight);
-
-        let mut writer = try!(encoder.write_header());
-        try!(writer.write_image_data(&bytes));
-        Ok(())
+    let mut bytes = Vec::with_capacity((width * height * 3) as usize);
+    for color in &texture.buffer {
+        bytes.push(color.r);
+        bytes.push(color.g);
+        bytes.push(color.b);
     }
+
+    let file = try!(File::create(file_path));
+    let writer = &mut BufWriter::new(file);
+
+    let mut encoder = png::Encoder::new(writer, width, height);
+    encoder.set(png::ColorType::RGB).set(png::BitDepth::Eight);
+
+    let mut writer = try!(encoder.write_header());
+    try!(writer.write_image_data(&bytes));
+    Ok(())
 }

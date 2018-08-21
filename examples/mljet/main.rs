@@ -37,10 +37,8 @@ pub fn main() -> Result<()> {
     let output_dir = cwd.clone().join("output");
 
     let (proj4, transform, raw_height_data) =
-        peaks::import::GdalRasterImporter::import(
-            &data_dir.clone().join("heightmap.tif"),
-            1,
-        ).unwrap();
+        peaks::io::gdal::import(&data_dir.clone().join("heightmap.tif"), 1)
+            .unwrap();
 
     let mut height_map =
         Texture::blank(raw_height_data.width, raw_height_data.height);
@@ -128,8 +126,5 @@ pub fn main() -> Result<()> {
         &mut render_surface
     ));
     peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::export::PngExporter::export(
-        &output_dir.clone().join("render.png"),
-        &output,
-    )
+    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
 }

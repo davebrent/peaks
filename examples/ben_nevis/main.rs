@@ -40,14 +40,13 @@ pub fn main() -> Result<()> {
     //  <source> <dest>
     let f =
         "/home/webadmin/Shared/maps/data/eu_dem_v11_e30n30_utm_30_wgs84.tif";
-    let (proj4, transform, raw_height_data) =
-        peaks::import::GdalRasterImporter::import_bbox(
-            &Path::new(f),
-            1,
-            (-5.75958251953125, 57.260479840933094),
-            (-4.2867279052734375, 56.702620872371355),
-            &camera_proj4,
-        ).unwrap();
+    let (proj4, transform, raw_height_data) = peaks::io::gdal::import_bbox(
+        &Path::new(f),
+        1,
+        (-5.75958251953125, 57.260479840933094),
+        (-4.2867279052734375, 56.702620872371355),
+        &camera_proj4,
+    ).unwrap();
 
     let (eye_lat, eye_lon) = transform_coords(
         -5.000324249267579,
@@ -127,8 +126,5 @@ pub fn main() -> Result<()> {
         &mut render_surface
     ));
     peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::export::PngExporter::export(
-        &output_dir.clone().join("render.png"),
-        &output,
-    )
+    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
 }

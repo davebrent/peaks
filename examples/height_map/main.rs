@@ -28,7 +28,7 @@ pub fn main() -> Result<()> {
     let data_dir = cwd.clone().join("data");
     let output_dir = cwd.clone().join("output");
 
-    let mono_map = peaks::import::BmpImporter::import(&Path::new(&data_dir
+    let mono_map = peaks::io::bmp::import(&Path::new(&data_dir
         .clone()
         .join("height_map.bmp")));
 
@@ -126,8 +126,5 @@ pub fn main() -> Result<()> {
         &mut render_surface
     ));
     peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::export::PngExporter::export(
-        &output_dir.clone().join("render.png"),
-        &output,
-    )
+    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
 }

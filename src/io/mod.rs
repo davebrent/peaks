@@ -13,8 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-mod png;
-mod ppm;
-
-pub use self::png::PngExporter;
-pub use self::ppm::PpmExporter;
+pub mod bmp;
+pub mod gdal;
+pub mod png;
+pub mod ppm;

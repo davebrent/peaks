@@ -39,10 +39,9 @@ pub fn main() -> Result<()> {
     let data_dir = cwd.clone().join("data");
     let output_dir = cwd.clone().join("output");
 
-    let (_, transform, height_map) = peaks::import::GdalRasterImporter::import(
-        &data_dir.clone().join("height_map.tif"),
-        1,
-    ).unwrap();
+    let (_, transform, height_map) =
+        peaks::io::gdal::import(&data_dir.clone().join("height_map.tif"), 1)
+            .unwrap();
 
     let width = height_map.width;
     let height = height_map.height;
@@ -170,8 +169,5 @@ pub fn main() -> Result<()> {
         blit(&output, &mut composited, width * 2, 0);
     }
 
-    peaks::export::PngExporter::export(
-        &output_dir.clone().join("render.png"),
-        &composited,
-    )
+    peaks::io::png::export(&output_dir.clone().join("render.png"), &composited)
 }

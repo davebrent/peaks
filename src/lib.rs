@@ -19,8 +19,7 @@ extern crate png;
 
 mod cameras;
 pub mod exec;
-pub mod export;
-pub mod import;
+pub mod io;
 mod materials;
 mod math;
 pub mod ops;

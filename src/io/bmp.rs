@@ -13,29 +13,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use std::fs::File;
-use std::io::{Result, Write};
-use std::path::Path;
-
+use bmp;
 use math::Color;
+use std::path::Path;
 use textures::Texture;
 
-pub struct PpmExporter;
+pub fn import(path: &Path) -> Texture<Color> {
+    let image = bmp::open(path).unwrap();
+    let width = image.get_width();
+    let height = image.get_height();
 
-impl PpmExporter {
-    pub fn export(file_path: &Path, texture: &Texture<Color>) -> Result<()> {
-        let width = texture.width;
-        let height = texture.height;
-
-        let mut bytes = Vec::with_capacity(width * height * 3);
-        for color in &texture.buffer {
-            bytes.push(color.r);
-            bytes.push(color.g);
-            bytes.push(color.b);
-        }
-
-        let mut f = try!(File::create(file_path));
-        try!(f.write_all(format!("P6 {} {} 255\n", width, height).as_bytes()));
-        f.write_all(&bytes)
+    let mut output = Texture::blank(width as usize, height as usize);
+    for (x, y) in image.coordinates() {
+        let color = image.get_pixel(x, y);
+        output.write1x1(
+            x as usize,
+            y as usize,
+            Color::new(color.r, color.g, color.b),
+        );
     }
+
+    output
 }
