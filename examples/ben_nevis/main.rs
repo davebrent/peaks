@@ -13,33 +13,68 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+/// An example of rendering a DEM textured with land sat data using an
+/// orthographic camera. The DEM is from EU-DEM v1.1 from [EU Copernicus][1].
+/// Land sat data taken from [Sentinel Hub Explorer][2]. Both geotifs were
+/// warped with a bilinear filter using the following command before hand:
+///
+///     $ gdalwarp -r bilinear -t_srs '+proj=utm +zone=30 +datum=WGS84' \
+///         <source> <dest>
+///
+/// In this example the DEM also undergoes some terrain generalisation before
+/// rendering.
+///
+///   [1]: https://land.copernicus.eu/
+///   [2]: https://apps.sentinel-hub.com/eo-browser/
 extern crate peaks;
 
-use peaks::ops::{
-    smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
-};
-use peaks::{
-    transform_coords, HeightMap, NormalMaterial, Object, PinholeCamera,
-    RegularGridSampler, Renderer, Scene, Texture, Vec3,
-};
 use std::io::Result;
 use std::path::Path;
 use std::sync::Arc;
 
+use peaks::ops::{
+    byte_stack_to_rgb, scale, smooth, srgb_to_linear,
+    terrain_generalise_weights, terrain_weighted_exaggeration,
+};
+use peaks::{
+    transform_coords, HeightMap, Object, OrthographicCamera,
+    RegularGridSampler, Renderer, Scene, Texture, TextureMaterial, Vec3,
+};
+
+const LAND_SAT_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/data/nevis-2018-06-30.tif";
+const DEM_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/data/eu_dem_v11_e30n30_utm_30_wgs84.tif";
+
 pub fn main() -> Result<()> {
-    let width = 1260 * 1;
+    let width = 960 * 1;
     let height = 540 * 1;
     let num_samples = 4;
+    let vertical_exageration = 1.25;
 
     let cwd = Path::new(file!()).parent().unwrap();
     let output_dir = cwd.clone().join("output");
 
+    let (_, satelite_transform, rasters) =
+        peaks::io::gdal::import(LAND_SAT_DATASET, &[1, 2, 3]).unwrap();
+
+    let sat_width = rasters[0].width;
+    let sat_height = rasters[0].height;
+
+    let mut satelite_texture_color = Texture::blank(sat_width, sat_height);
+    let mut satelite_texture_linear = Texture::blank(sat_width, sat_height);
+
+    byte_stack_to_rgb(
+        &rasters[0],
+        &rasters[1],
+        &rasters[2],
+        &mut satelite_texture_color,
+    );
+    srgb_to_linear(&satelite_texture_color, &mut satelite_texture_linear);
+
     let camera_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-    // Original DEM take from EU DEM v1.1 was reprojected using this command:
-    // $ gdalwarp -r bilinear -t_srs '+proj=utm +zone=30 +datum=WGS84' \
-    //  <source> <dest>
     let (proj4, transform, rasters) = peaks::io::gdal::import_spatial(
-        "/home/webadmin/Shared/maps/data/eu_dem_v11_e30n30_utm_30_wgs84.tif",
+        DEM_DATASET,
         &[1],
         (-5.75958251953125, 57.260479840933094),
         (-4.2867279052734375, 56.702620872371355),
@@ -48,35 +83,35 @@ pub fn main() -> Result<()> {
     let raw_height_data = &rasters[0];
 
     let (eye_lat, eye_lon) = transform_coords(
-        -5.000324249267579,
-        56.77201127687461,
+        -5.11962890625,
+        56.834700617098356,
         &camera_proj4,
         &proj4,
     );
 
     let (look_lat, look_lon) = transform_coords(
-        -4.993972778320313,
-        56.81281355548693,
+        -5.003414154052734,
+        56.79627235994062,
         &camera_proj4,
         &proj4,
     );
 
-    let camera = PinholeCamera::new(
+    let camera = OrthographicCamera::new(
         width,
         height,
-        Vec3::new(eye_lat, 3_000.0, eye_lon * -1.0),
-        Vec3::new(look_lat, 1_300.0, look_lon * -1.0),
-        40.0_f64.to_radians(),
+        Vec3::new(eye_lat, 4_000.0, eye_lon * -1.0),
+        Vec3::new(look_lat, 500.0, look_lon * -1.0),
         1.0,
         Vec3::new(0.0, 1.0, 0.0),
+        3_500.0,
     );
 
-    let mut height_map =
-        Texture::blank(raw_height_data.width, raw_height_data.height);
-    let mut weights =
-        Texture::blank(raw_height_data.width, raw_height_data.height);
-    let mut smoothed =
-        Texture::blank(raw_height_data.width, raw_height_data.height);
+    let ter_width = raw_height_data.width;
+    let ter_height = raw_height_data.height;
+    let mut height_map = Texture::blank(ter_width, ter_height);
+    let mut weights = Texture::blank(ter_width, ter_height);
+    let mut smoothed = Texture::blank(ter_width, ter_height);
+    let mut exagerated = Texture::blank(ter_width, ter_height);
 
     let pixel_size = transform.unit_size().0;
     let pre_smoothing = 46;
@@ -100,15 +135,19 @@ pub fn main() -> Result<()> {
     );
     terrain_weighted_exaggeration(
         &smoothed,
-        &mut height_map,
+        &mut exagerated,
         &weights,
         exagerate,
     );
+    scale(&exagerated, &mut height_map, vertical_exageration);
 
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
         objects: vec![Object::new(0, 0)],
-        materials: vec![Arc::new(NormalMaterial::new())],
+        materials: vec![Arc::new(TextureMaterial::new(
+            satelite_transform,
+            satelite_texture_linear,
+        ))],
         primitives: vec![Arc::new(HeightMap::new(transform, &height_map))],
     };
 
