@@ -387,6 +387,18 @@ pub fn terrain_weighted_exaggeration(
     }
 }
 
+pub fn byte_stack_to_rgb(
+    red: &Texture<u8>,
+    green: &Texture<u8>,
+    blue: &Texture<u8>,
+    output: &mut Texture<Color>,
+) {
+    for i in 0..output.buffer.len() {
+        let color = Color::new(red.buffer[i], green.buffer[i], blue.buffer[i]);
+        output.buffer[i] = color;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

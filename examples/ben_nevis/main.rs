@@ -38,13 +38,14 @@ pub fn main() -> Result<()> {
     // Original DEM take from EU DEM v1.1 was reprojected using this command:
     // $ gdalwarp -r bilinear -t_srs '+proj=utm +zone=30 +datum=WGS84' \
     //  <source> <dest>
-    let (proj4, transform, raw_height_data) = peaks::io::gdal::import_bbox(
+    let (proj4, transform, rasters) = peaks::io::gdal::import_spatial(
         "/home/webadmin/Shared/maps/data/eu_dem_v11_e30n30_utm_30_wgs84.tif",
-        1,
+        &[1],
         (-5.75958251953125, 57.260479840933094),
         (-4.2867279052734375, 56.702620872371355),
         &camera_proj4,
     ).unwrap();
+    let raw_height_data = &rasters[0];
 
     let (eye_lat, eye_lon) = transform_coords(
         -5.000324249267579,

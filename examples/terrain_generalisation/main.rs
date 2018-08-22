@@ -39,9 +39,10 @@ pub fn main() -> Result<()> {
     let data_dir = cwd.clone().join("data");
     let output_dir = cwd.clone().join("output");
 
-    let (_, transform, height_map) =
-        peaks::io::gdal::import(&data_dir.clone().join("height_map.tif"), 1)
+    let (_, transform, rasters) =
+        peaks::io::gdal::import(&data_dir.clone().join("height_map.tif"), &[1])
             .unwrap();
+    let height_map = &rasters[0];
 
     let width = height_map.width;
     let height = height_map.height;

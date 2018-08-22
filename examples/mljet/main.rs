@@ -36,9 +36,10 @@ pub fn main() -> Result<()> {
     let data_dir = cwd.clone().join("data");
     let output_dir = cwd.clone().join("output");
 
-    let (proj4, transform, raw_height_data) =
-        peaks::io::gdal::import(&data_dir.clone().join("heightmap.tif"), 1)
+    let (proj4, transform, rasters) =
+        peaks::io::gdal::import(&data_dir.clone().join("heightmap.tif"), &[1])
             .unwrap();
+    let raw_height_data = &rasters[0];
 
     let mut height_map =
         Texture::blank(raw_height_data.width, raw_height_data.height);

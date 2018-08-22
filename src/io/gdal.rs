@@ -13,60 +13,67 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use gdal::errors::Result;
-use gdal::raster::{Dataset, RasterBand};
-use gdal::spatial_ref::SpatialRef;
 use std::convert::AsRef;
 use std::f64::EPSILON;
 use std::path::Path;
 
+use gdal::errors::Result;
+use gdal::raster::{Dataset, RasterBand};
+use gdal::spatial_ref::SpatialRef;
+
 use math::{transform_coords, AffineTransform};
 use textures::Texture;
 
-/// Import an entire raster file
-pub fn import<T>(
-    path: T,
-    band: usize,
-) -> Result<(String, AffineTransform, Texture<f64>)>
+/// Import a region specified in pixel coordinates from a set of raster bands
+pub fn import_rect<P, D>(
+    path: P,
+    bands: &[usize],
+    x: usize,
+    y: usize,
+    width: usize,
+    height: usize,
+) -> Result<(String, AffineTransform, Vec<Texture<D>>)>
 where
-    T: AsRef<Path>,
+    P: AsRef<Path>,
+    D: Copy + Clone + Default + PartialEq + GdalRasterType<D>,
 {
     let dataset = try!(Dataset::open(path.as_ref()));
-    let raster = try!(dataset.rasterband(band as isize));
     let transform = try!(dataset.geo_transform());
-    let (width, height) = dataset.size();
+    let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
+    let proj4 = try!(spat_ref.to_proj4());
 
-    let data = try!(read_raster(&raster, 0, 0, width, height));
+    let (x, y) = (x as isize, y as isize);
+    let mut rasters = Vec::with_capacity(bands.len());
+    for band in bands {
+        let raster = try!(dataset.rasterband(*band as isize));
+        let data = try!(D::read_raster(&raster, x, y, width, height));
+        rasters.push(Texture::new(width, height, data));
+    }
 
     assert!((transform[2] - 0.0).abs() < EPSILON);
     assert!((transform[4] - 0.0).abs() < EPSILON);
 
-    let x_origin = transform[0];
-    let y_origin = transform[3] * -1.0;
-    let pixel_width = transform[1];
-    let pixel_height = transform[5] * -1.0;
-    let transform =
-        AffineTransform::new(x_origin, y_origin, pixel_width, pixel_height);
+    let pw = transform[1];
+    let ph = transform[5] * -1.0;
+    let xo = transform[0] + (x as f64 * transform[1]);
+    let yo = (transform[3] + (y as f64 * transform[5])) * -1.0;
 
-    let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
-    let proj4 = try!(spat_ref.to_proj4());
-
-    Ok((proj4, transform, Texture::new(width, height, data)))
+    Ok((proj4, AffineTransform::new(xo, yo, pw, ph), rasters))
 }
 
-/// Import a bounding box of a raster file
-pub fn import_bbox<T>(
-    path: T,
-    band: usize,
+/// Import a region specified in spatial coordinates from a set of raster bands
+pub fn import_spatial<P, D>(
+    path: P,
+    bands: &[usize],
     nw: (f64, f64),
     se: (f64, f64),
     inp_proj4: &str,
-) -> Result<(String, AffineTransform, Texture<f64>)>
+) -> Result<(String, AffineTransform, Vec<Texture<D>>)>
 where
-    T: AsRef<Path>,
+    P: AsRef<Path>,
+    D: Copy + Clone + Default + PartialEq + GdalRasterType<D>,
 {
     let dataset = try!(Dataset::open(path.as_ref()));
-    let raster = try!(dataset.rasterband(band as isize));
     let transform = try!(dataset.geo_transform());
     let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
     let proj4 = try!(spat_ref.to_proj4());
@@ -74,62 +81,86 @@ where
     let nw = transform_coords(nw.0, nw.1, inp_proj4, &proj4);
     let se = transform_coords(se.0, se.1, inp_proj4, &proj4);
 
-    let (x1, y1) = world_to_raster(nw.0, nw.1, &transform);
-    let (x2, y2) = world_to_raster(se.0, se.1, &transform);
+    let transform = AffineTransform::new(
+        transform[0],
+        transform[3],
+        transform[1],
+        transform[5],
+    );
+
+    let (x1, y1) = transform.inverse(nw.0, nw.1);
+    let (x2, y2) = transform.inverse(se.0, se.1);
     let width = (x2 - x1) as usize;
     let height = (y2 - y1) as usize;
 
-    let data = try!(read_raster(&raster, x1, y1, width, height));
-
-    assert!((transform[2] - 0.0).abs() < EPSILON);
-    assert!((transform[4] - 0.0).abs() < EPSILON);
-
-    let pixel_width = transform[1];
-    let pixel_height = transform[5] * -1.0;
-    let x_origin = transform[0] + (x1 as f64 * transform[1]);
-    let y_origin = (transform[3] + (y1 as f64 * transform[5])) * -1.0;
-    let transform =
-        AffineTransform::new(x_origin, y_origin, pixel_width, pixel_height);
-
-    Ok((proj4, transform, Texture::new(width, height, data)))
+    import_rect(path, bands, x1 as usize, y1 as usize, width, height)
 }
 
-fn world_to_raster(x: f64, y: f64, transform: &[f64; 6]) -> (isize, isize) {
-    assert!((transform[2] - 0.0).abs() < EPSILON);
-    assert!((transform[4] - 0.0).abs() < EPSILON);
-    let x_origin = transform[0];
-    let y_origin = transform[3];
-    let pixel_width = transform[1];
-    let pixel_height = -transform[5];
-    let col = (x - x_origin) / pixel_width;
-    let row = (y_origin - y) / pixel_height;
-    (col.floor() as isize, row.floor() as isize)
+/// Import all specified raster bands
+pub fn import<P, D>(
+    path: P,
+    bands: &[usize],
+) -> Result<(String, AffineTransform, Vec<Texture<D>>)>
+where
+    P: AsRef<Path>,
+    D: Copy + Clone + Default + PartialEq + GdalRasterType<D>,
+{
+    let dataset = try!(Dataset::open(path.as_ref()));
+    let (width, height) = dataset.size();
+    import_rect(path, bands, 0, 0, width, height)
 }
 
-fn read_raster(
-    raster: &RasterBand,
-    x: isize,
-    y: isize,
-    width: usize,
-    height: usize,
-) -> Result<Vec<f64>> {
-    let window = (width, height);
-    let nodata = match raster.no_data_value() {
-        Some(val) => val,
-        None => 0.0,
-    };
+// XXX: See https://github.com/georust/gdal/issues/48
+pub trait GdalRasterType<T>
+where
+    T: Copy + Default + PartialEq,
+{
+    fn read_raster(
+        raster: &RasterBand,
+        x: isize,
+        y: isize,
+        width: usize,
+        height: usize,
+    ) -> Result<Vec<T>>;
+}
 
-    let data = try!(raster.read_as::<f64>((x, y), window, window))
-        .data
-        .iter()
-        .map(|e| {
-            if (*e - nodata).abs() < EPSILON {
-                0.0
-            } else {
-                *e
-            }
-        })
-        .collect();
+impl GdalRasterType<u8> for u8 {
+    fn read_raster(
+        raster: &RasterBand,
+        x: isize,
+        y: isize,
+        width: usize,
+        height: usize,
+    ) -> Result<Vec<u8>> {
+        let window = (width, height);
+        Ok(try!(raster.read_as::<u8>((x, y), window, window)).data)
+    }
+}
 
-    Ok(data)
+impl GdalRasterType<f64> for f64 {
+    fn read_raster(
+        raster: &RasterBand,
+        x: isize,
+        y: isize,
+        width: usize,
+        height: usize,
+    ) -> Result<Vec<f64>> {
+        let window = (width, height);
+        let nodata = match raster.no_data_value() {
+            Some(val) => val,
+            None => Default::default(),
+        };
+
+        Ok(try!(raster.read_as::<f64>((x, y), window, window))
+            .data
+            .iter()
+            .map(|d| {
+                if (*d - nodata).abs() < EPSILON {
+                    Default::default()
+                } else {
+                    *d
+                }
+            })
+            .collect())
+    }
 }
