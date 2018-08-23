@@ -43,6 +43,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
   (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
 * (2008) Maximum Mipmaps for Fast, Accurate, and Scalable Dynamic Height Field
   Rendering (Art Tevs and Ivo Ihrke and Hans-Peter Seidel)
+* (2007) Introducing Plan Oblique Relief (Jenny, Bernhard & Patterson, Tom)
 * (2007) Panorama maps with non-linear ray tracing (Falk, Martin & Schafhitzel,
   Tobias, Weiskopf, Daniel, Ertl, Thomas)
 * (2004) Ray Bilinear Patch Intersections (Shaun D. Ramsey and Kristin Potter
