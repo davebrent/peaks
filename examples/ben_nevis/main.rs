@@ -13,19 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-/// An example of rendering a DEM textured with land sat data using an
-/// orthographic camera. The DEM is from EU-DEM v1.1 from [EU Copernicus][1].
-/// Land sat data taken from [Sentinel Hub Explorer][2]. Both geotifs were
-/// warped with a bilinear filter using the following command before hand:
-///
-///     $ gdalwarp -r bilinear -t_srs '+proj=utm +zone=30 +datum=WGS84' \
-///         <source> <dest>
-///
-/// In this example the DEM also undergoes some terrain generalisation before
-/// rendering.
-///
-///   [1]: https://land.copernicus.eu/
-///   [2]: https://apps.sentinel-hub.com/eo-browser/
 extern crate peaks;
 
 use std::io::Result;
@@ -38,13 +25,20 @@ use peaks::ops::{
 };
 use peaks::{
     transform_coords, HeightMap, Object, OrthographicCamera,
-    RegularGridSampler, Renderer, Scene, Texture, TextureMaterial, Vec3,
+    RegularGridSampler, Renderer, Scene, SdfMaterial, Texture, TextureMaterial,
+    Vec3,
 };
 
 const LAND_SAT_DATASET: &'static str =
-    "/home/webadmin/Shared/maps/data/nevis-2018-06-30.tif";
+    "/home/webadmin/Shared/maps/ben_nevis/landsat.tif";
 const DEM_DATASET: &'static str =
-    "/home/webadmin/Shared/maps/data/eu_dem_v11_e30n30_utm_30_wgs84.tif";
+    "/home/webadmin/Shared/maps/ben_nevis/dem.tif";
+const WATER_POLYGONS_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/ben_nevis/water-polygons";
+const ROUTE_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/ben_nevis/route";
+const RIVERS_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/ben_nevis/rivers.geojson";
 
 pub fn main() -> Result<()> {
     let width = 960 * 1;
@@ -73,13 +67,8 @@ pub fn main() -> Result<()> {
     srgb_to_linear(&satelite_texture_color, &mut satelite_texture_linear);
 
     let camera_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-    let (proj4, transform, rasters) = peaks::io::gdal::import_spatial(
-        DEM_DATASET,
-        &[1],
-        (-5.75958251953125, 57.260479840933094),
-        (-4.2867279052734375, 56.702620872371355),
-        &camera_proj4,
-    ).unwrap();
+    let (proj4, transform, rasters) =
+        peaks::io::gdal::import(DEM_DATASET, &[1]).unwrap();
     let raw_height_data = &rasters[0];
 
     let (eye_lat, eye_lon) = transform_coords(
@@ -141,13 +130,64 @@ pub fn main() -> Result<()> {
     );
     scale(&exagerated, &mut height_map, vertical_exageration);
 
+    let mut route_lines =
+        peaks::io::ogr::import(ROUTE_DATASET, &[0]).unwrap()[0].to_vec();
+    let mut river_lines =
+        peaks::io::ogr::import(RIVERS_DATASET, &[0]).unwrap()[0].to_vec();
+    let mut water_polygons =
+        peaks::io::ogr::import(WATER_POLYGONS_DATASET, &[0]).unwrap()[0]
+            .to_vec();
+
+    for shape in &mut route_lines {
+        shape.project(transform, &height_map);
+    }
+    for shape in &mut river_lines {
+        shape.project(transform, &height_map);
+    }
+    for shape in &mut water_polygons {
+        shape.project(transform, &height_map);
+    }
+
+    let satelite_material =
+        TextureMaterial::new(satelite_transform, satelite_texture_linear);
+
+    let water_material = SdfMaterial::new(
+        satelite_material,
+        water_polygons,
+        0.0,
+        Vec3::new(0.1, 0.4, 0.8),
+        1.0,
+        25.0,
+        Vec3::new(0.1, 0.4, 0.8) * 0.3,
+        3.0,
+    );
+
+    let rivers_material = SdfMaterial::new(
+        water_material,
+        river_lines,
+        12.0,
+        Vec3::new(0.1, 0.4, 0.8),
+        1.0,
+        0.0,
+        Vec3::new(0.0, 0.0, 0.0),
+        3.0,
+    );
+
+    let route_material = SdfMaterial::new(
+        rivers_material,
+        route_lines,
+        50.0,
+        Vec3::new(1.0, 1.0, 0.0),
+        1.0,
+        25.0,
+        Vec3::new(0.3, 0.3, 0.0),
+        100.0,
+    );
+
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
         objects: vec![Object::new(0, 0)],
-        materials: vec![Arc::new(TextureMaterial::new(
-            satelite_transform,
-            satelite_texture_linear,
-        ))],
+        materials: vec![Arc::new(route_material)],
         primitives: vec![Arc::new(HeightMap::new(transform, &height_map))],
     };
 

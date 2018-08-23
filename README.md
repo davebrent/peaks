@@ -11,15 +11,15 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 - [x] Ray bilinear patch intersection for terrain
 - [x] Terrain generalisation
 - [ ] 2d vector primitives
-    - [ ] Line string
-        - [ ] Strokes
-    - [ ] Polygons
+    - [x] Line string
+        - [x] Strokes
+    - [x] Polygons
     - [ ] Points/Markers
         - [ ] Icons
         - [ ] Typography
 - [ ] Loading geographic data
-    - [ ] Shp file loader
-    - [ ] Water bodies
+    - [x] Shp file loader
+    - [x] Water bodies
     - [ ] Roads
 - [ ] Different views/camera projection
     - [ ] Perspective
