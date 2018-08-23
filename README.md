@@ -4,19 +4,33 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 
 ## TODO
 
-* [x] Ray bilinear patch intersection for terrain
-* [ ] Better sub sampling method (Poisson disc...)
-* [x] Orthographic camera
-* [ ] Use simulated film values for setting field of view
-* [ ] Adding water bodies (possibly from shp file?)
-* [ ] Add a line string primitive for drawing paths
-* [ ] Add marker primitives
-* [x] Terrain generalisation
-* [ ] Non photo realistic features outlines on the terrain
-* [ ] Aerial perspective
-* [ ] Documentation
-    * [ ] Coordinate systems
-    * [ ] Linear color
+- [x] Ray bilinear patch intersection for terrain
+- [x] Terrain generalisation
+- [ ] 2d vector primitives
+    - [ ] Line string
+        - [ ] Strokes
+    - [ ] Polygons
+    - [ ] Points/Markers
+        - [ ] Icons
+        - [ ] Typography
+- [ ] Loading geographic data
+    - [ ] Shp file loader
+    - [ ] Water bodies
+    - [ ] Roads
+- [ ] Different views/camera projection
+    - [ ] Perspective
+        - [ ] Realistic camera parameters (film gauge etc.)
+    - [x] Orthographic
+    - [ ] Plan oblique
+    - [ ] Terrain bending
+- [ ] Improved sub sampling method
+- [ ] Non photo realistic features outlines
+- [ ] Aerial perspective
+- [ ] Lighting method
+- [ ] Documentation
+    - [ ] Coordinate systems
+    - [ ] Linear color
+    - [ ] Terrain generalisation
 
 ## Reading
 
