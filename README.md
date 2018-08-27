@@ -4,7 +4,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 
 ## Current state
 
-![Ben Nevis by the Carn Mor Dearg Arete](/examples/ben_nevis/render.jpeg?raw=true "Ben Nevis by the Carn Mor Dearg Arete")
+![Ben Nevis by the Carn Mor Dearg Arete](/examples/ben_nevis/render.png?raw=true "Ben Nevis by the Carn Mor Dearg Arete")
 
 ## TODO
 
