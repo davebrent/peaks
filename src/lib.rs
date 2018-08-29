@@ -13,9 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-extern crate bmp;
 extern crate gdal;
-extern crate gpx;
 extern crate png;
 
 mod cameras;

@@ -13,9 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-pub mod bmp;
 pub mod gdal;
-pub mod gpx;
 pub mod ogr;
 pub mod png;
 pub mod ppm;
