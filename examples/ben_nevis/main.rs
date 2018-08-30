@@ -71,28 +71,27 @@ pub fn main() -> Result<()> {
         peaks::io::gdal::import(DEM_DATASET, &[1]).unwrap();
     let raw_height_data = &rasters[0];
 
-    let (eye_lat, eye_lon) = transform_coords(
-        -5.11962890625,
-        56.834700617098356,
+    let (look_lat, look_lon) = transform_coords(
+        -5.002555847167968,
+        56.7966483772629,
         &camera_proj4,
         &proj4,
     );
 
-    let (look_lat, look_lon) = transform_coords(
-        -5.003414154052734,
-        56.79627235994062,
-        &camera_proj4,
-        &proj4,
-    );
+    let camera_look_at = Vec3::new(look_lat, 380.0, look_lon * -1.0);
+    let axis = Vec3::new(0.0, 0.0, 1.0)
+        .rotate_x(Vec3::zeros(), (-25_f64).to_radians())
+        .rotate_y(Vec3::zeros(), (-128_f64).to_radians());
+    let camera_position = camera_look_at + axis * 7_000.0;
 
     let camera = OrthographicCamera::new(
         width,
         height,
-        Vec3::new(eye_lat, 4_000.0, eye_lon * -1.0),
-        Vec3::new(look_lat, 500.0, look_lon * -1.0),
+        camera_position,
+        camera_look_at,
         1.0,
         Vec3::new(0.0, 1.0, 0.0),
-        3_500.0,
+        3_700.0,
     );
 
     let ter_width = raw_height_data.width;
