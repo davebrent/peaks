@@ -59,11 +59,20 @@ pub fn operator3x3<F, I, O>(
     let width = input.width;
     let height = input.height;
 
-    for y in 1..height - 1 {
-        for x in 1..width - 1 {
-            let window = input.lookup3x3(x - 1, y - 1);
-            let result = callback(&window);
-            output.write1x1(x, y, result);
+    let mut window: [I; 9] = Default::default();
+    let indices: [isize; 3] = [-1, 0, 1];
+
+    for y in 0..height {
+        for x in 0..width {
+            for yw in &indices {
+                for xw in &indices {
+                    let bx = (x as isize + xw).max(0).min(width as isize - 1);
+                    let by = (y as isize + yw).max(0).min(height as isize - 1);
+                    let iw = (3 * (yw + 1) + (xw + 1)) as usize;
+                    window[iw] = input.lookup1x1(bx as usize, by as usize);
+                }
+            }
+            output.write1x1(x, y, callback(&window));
         }
     }
 }
@@ -402,6 +411,14 @@ pub fn byte_stack_to_rgb(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_operator_3x3() {
+        let mut output = Texture::blank(1, 1);
+        let input = Texture::new(1, 1, vec![50]);
+        operator3x3(&input, &mut output, |window| window[4]);
+        assert_eq!(output.lookup1x1(0, 0), 50);
+    }
 
     #[test]
     fn test_slope_calculation() {
