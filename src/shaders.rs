@@ -15,6 +15,7 @@
 
 use math::{AffineTransform, Ray, Vec3};
 use primitives::Intersection;
+use samplers::{RayStencilSampler, Sampler};
 use shapes::Shape;
 use textures::{Bilinear, Texture};
 
@@ -163,5 +164,70 @@ where
         }
 
         base
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct FeatureLineShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    inner: M,
+    color: Vec3,
+    stencil: RayStencilSampler,
+    crease_threshold: f64,
+    self_silhoutte_threshold: f64,
+}
+
+impl<M> FeatureLineShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    pub fn new(
+        inner: M,
+        color: Vec3,
+        quality: usize,
+        radius: f64,
+        crease_threshold: f64,
+        self_silhoutte_threshold: f64,
+    ) -> FeatureLineShader<M> {
+        FeatureLineShader {
+            inner,
+            color,
+            stencil: RayStencilSampler::new(quality, radius),
+            crease_threshold,
+            self_silhoutte_threshold,
+        }
+    }
+}
+
+impl<M> Shader for FeatureLineShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    fn shade(&self, tracer: &Tracer, info: &TraceInfo) -> Vec3 {
+        let i = self.stencil
+            .samples()
+            .map(|(x, y)| tracer.trace(info.x + x, info.y + y))
+            .filter_map(|stencil| stencil)
+            .filter(|stencil| stencil.primitive == info.primitive)
+            .filter(|stencil| {
+                Vec3::angle(
+                    stencil.intersection.normal,
+                    info.intersection.normal,
+                ) < self.crease_threshold
+            })
+            .filter(|stencil| {
+                (stencil.intersection.t - info.intersection.t).abs()
+                    < self.self_silhoutte_threshold
+            })
+            .count() as f64;
+
+        // Normalise, accounting for the region on the otherside of the edge
+        let num_stencils = self.stencil.amount() as f64;
+        let edge_metric = 1.0 - (i - num_stencils * 0.5) / (num_stencils * 0.5);
+
+        let color = self.inner.shade(tracer, info);
+        (color * (1.0 - edge_metric)) + (self.color * edge_metric)
     }
 }

@@ -28,7 +28,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
     - [ ] Plan oblique
     - [ ] Terrain bending
 - [ ] Improved sub sampling method
-- [ ] Non photo realistic features outlines
+- [x] Non photo realistic features outlines
 - [ ] Aerial perspective
 - [ ] Lighting method
 - [ ] Documentation
@@ -45,6 +45,8 @@ Peaks is a (work in progress) tool for rendering 3d maps.
   (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
 * (2010) Automated Reduction of Visual Complexity in Small-Scale Relief Shading
   (M. Leonowicz, Anna and Jenny, Bernhard and Hurni, Lorenz)
+* (2009) Ray tracing NPR-style feature lines (Choudhury, A. N. M. Imroz and
+  Parker, Steven G.)
 * (2008) Maximum Mipmaps for Fast, Accurate, and Scalable Dynamic Height Field
   Rendering (Art Tevs and Ivo Ihrke and Hans-Peter Seidel)
 * (2007) Introducing Plan Oblique Relief (Jenny, Bernhard & Patterson, Tom)

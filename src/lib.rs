@@ -35,10 +35,11 @@ pub use primitives::{
     Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,
 };
 pub use render::Renderer;
-pub use samplers::{RegularGridSampler, Sampler};
+pub use samplers::{RayStencilSampler, RegularGridSampler, Sampler};
 pub use scene::{Object, Scene};
 pub use shaders::{
-    ConstantShader, NormalShader, SdfShader, Shader, TextureShader,
+    ConstantShader, FeatureLineShader, NormalShader, SdfShader, Shader,
+    TextureShader,
 };
 pub use shapes::{LineString, Point, Polygon, Ring, Shape};
 pub use textures::{Bilinear, Texture};

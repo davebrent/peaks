@@ -16,8 +16,9 @@
 extern crate peaks;
 
 use peaks::{
-    Aabb, BilinearPatch, NormalShader, Object, PinholeCamera, Plane,
-    RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
+    Aabb, BilinearPatch, FeatureLineShader, NormalShader, Object,
+    PinholeCamera, Plane, RegularGridSampler, Renderer, Scene, Sphere, Texture,
+    Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -32,7 +33,14 @@ pub fn main() -> Result<()> {
 
     let scene = Scene {
         background: Vec3::new(1.0, 1.0, 1.0),
-        shaders: vec![Arc::new(NormalShader::new())],
+        shaders: vec![Arc::new(FeatureLineShader::new(
+            NormalShader::new(),
+            Vec3::zeros(),
+            1,
+            0.5,
+            80_f64.to_radians(),
+            10_000.0,
+        ))],
         primitives: vec![
             Arc::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
             Arc::new(Aabb::new(

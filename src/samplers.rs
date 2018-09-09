@@ -55,6 +55,47 @@ impl Sampler for RegularGridSampler {
     }
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct RayStencilSampler {
+    samples: Vec<(f64, f64)>,
+}
+
+impl RayStencilSampler {
+    pub fn new(quality: usize, radius: f64) -> RayStencilSampler {
+        let mut total_samples = 0;
+        for ring in 0..quality {
+            total_samples += (ring + 1) * 2 * 4;
+        }
+
+        let mut samples = Vec::with_capacity(total_samples);
+        let inner_radius = radius / quality as f64;
+
+        for ring in 0..quality {
+            let num_samples = (ring + 1) * 2 * 4;
+            let angle = (360.0 / num_samples as f64).to_radians();
+
+            for sample in 0..num_samples {
+                let theta = sample as f64 * angle;
+                let x = theta.cos() * inner_radius * (ring as f64 + 1.0);
+                let y = theta.sin() * inner_radius * (ring as f64 + 1.0);
+                samples.push((x, y));
+            }
+        }
+
+        RayStencilSampler { samples }
+    }
+}
+
+impl Sampler for RayStencilSampler {
+    fn amount(&self) -> usize {
+        self.samples.len()
+    }
+
+    fn samples(&self) -> Iter<(f64, f64)> {
+        self.samples.iter()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -72,5 +113,13 @@ mod tests {
             sampler.samples,
             vec![(0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)]
         );
+    }
+
+    #[test]
+    fn test_num_samples_regular_disc() {
+        let disc = RayStencilSampler::new(1, 1.0);
+        assert_eq!(disc.amount(), 8);
+        let disc = RayStencilSampler::new(2, 1.0);
+        assert_eq!(disc.amount(), 24);
     }
 }

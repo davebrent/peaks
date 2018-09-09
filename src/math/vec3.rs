@@ -139,6 +139,11 @@ impl Vec3 {
             p.z,
         ) + origin
     }
+
+    #[inline(always)]
+    pub fn angle(a: Vec3, b: Vec3) -> f64 {
+        Vec3::dot(a, b).acos()
+    }
 }
 
 impl Add for Vec3 {
@@ -279,5 +284,27 @@ mod tests {
         let b = Vec3::new(0.0, 0.0, 20.0);
         assert_eq!(Vec3::distance(a, b), 10.0);
         assert_eq!(Vec3::distance(b, a), 10.0);
+    }
+
+    #[test]
+    fn angle_between_vectors() {
+        let a = Vec3::new(0.0, 1.0, 0.0);
+        let b = Vec3::new(0.0, 0.0, 1.0);
+        let c = Vec3::new(0.0, 0.0, -1.0);
+        let d = Vec3::new(0.0, -1.0, 0.0);
+
+        assert_eq!(Vec3::angle(a, a), 0.0);
+        assert_eq!(Vec3::angle(a, b), 90_f64.to_radians());
+        assert_eq!(Vec3::angle(a, c), 90_f64.to_radians());
+        assert_eq!(Vec3::angle(a, d), 180_f64.to_radians());
+
+        assert_eq!(
+            Vec3::angle(
+                Vec3::new(0.0, 1.0, 0.0)
+                    .rotate_x(Vec3::zeros(), 45_f64.to_radians()),
+                Vec3::new(0.0, 1.0, 0.0)
+            ),
+            45_f64.to_radians()
+        );
     }
 }
