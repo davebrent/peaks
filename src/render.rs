@@ -16,24 +16,21 @@
 use cameras::Camera;
 use math::Vec3;
 use primitives::Intersection;
-use samplers::RegularGridSampler;
+use samplers::Sampler;
 use scene::Scene;
 
-pub struct Renderer<C> {
+pub struct Renderer<C, S> {
     camera: C,
     scene: Scene,
-    sampler: RegularGridSampler,
+    sampler: S,
 }
 
-impl<C> Renderer<C>
+impl<C, S> Renderer<C, S>
 where
     C: Camera,
+    S: Sampler,
 {
-    pub fn new(
-        scene: Scene,
-        camera: C,
-        sampler: RegularGridSampler,
-    ) -> Renderer<C> {
+    pub fn new(scene: Scene, camera: C, sampler: S) -> Renderer<C, S> {
         Renderer {
             sampler,
             scene,

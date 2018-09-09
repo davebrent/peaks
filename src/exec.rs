@@ -16,6 +16,7 @@
 use cameras::Camera;
 use math::Vec3;
 use render::Renderer;
+use samplers::Sampler;
 use std::io::{self, Write};
 use std::time::{Duration, Instant};
 use textures::Texture;
@@ -106,14 +107,15 @@ impl ProgressCounter {
     }
 }
 
-pub fn render<C>(
+pub fn render<C, S>(
     width: usize,
     height: usize,
-    renderer: &Renderer<C>,
+    renderer: &Renderer<C, S>,
     image: &mut Texture<Vec3>,
 ) -> bool
 where
     C: 'static + Camera,
+    S: 'static + Sampler,
 {
     let mut progress = ProgressCounter::new(30, width * height);
     let mut completed = 0;

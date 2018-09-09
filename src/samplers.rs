@@ -13,6 +13,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
+use std::slice::Iter;
+
+pub trait Sampler {
+    fn samples(&self) -> Iter<(f64, f64)>;
+    fn amount(&self) -> usize;
+}
+
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct RegularGridSampler {
     samples: Vec<(f64, f64)>,
 }
@@ -35,12 +43,14 @@ impl RegularGridSampler {
 
         RegularGridSampler { samples }
     }
+}
 
-    pub fn amount(&self) -> usize {
+impl Sampler for RegularGridSampler {
+    fn amount(&self) -> usize {
         self.samples.len()
     }
 
-    pub fn samples(&self) -> impl Iterator<Item = &(f64, f64)> {
+    fn samples(&self) -> Iter<(f64, f64)> {
         self.samples.iter()
     }
 }
