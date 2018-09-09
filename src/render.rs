@@ -65,8 +65,8 @@ where
                 self.scene.background
             } else {
                 let object = &self.scene.objects[index];
-                let material = &self.scene.materials[object.material];
-                material.shade(ray, intersection)
+                let shader = &self.scene.shaders[object.shader];
+                shader.shade(ray, intersection)
             };
 
             color += sub_color * weight;

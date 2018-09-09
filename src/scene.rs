@@ -13,27 +13,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use materials::Material;
 use math::Vec3;
 use primitives::Primitive;
+use shaders::Shader;
 use std::sync::Arc;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub struct Object {
     pub geometry: usize,
-    pub material: usize,
+    pub shader: usize,
 }
 
 impl Object {
-    pub fn new(geometry: usize, material: usize) -> Object {
-        Object { geometry, material }
+    pub fn new(geometry: usize, shader: usize) -> Object {
+        Object { geometry, shader }
     }
 }
 
 #[derive(Clone)]
 pub struct Scene {
     pub background: Vec3,
-    pub materials: Vec<Arc<Material>>,
+    pub shaders: Vec<Arc<Shader>>,
     pub primitives: Vec<Arc<Primitive>>,
     pub objects: Vec<Object>,
 }

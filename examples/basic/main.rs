@@ -16,7 +16,7 @@
 extern crate peaks;
 
 use peaks::{
-    Aabb, BilinearPatch, NormalMaterial, Object, PinholeCamera, Plane,
+    Aabb, BilinearPatch, NormalShader, Object, PinholeCamera, Plane,
     RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
 };
 use std::io::Result;
@@ -32,7 +32,7 @@ pub fn main() -> Result<()> {
 
     let scene = Scene {
         background: Vec3::new(1.0, 1.0, 1.0),
-        materials: vec![Arc::new(NormalMaterial::new())],
+        shaders: vec![Arc::new(NormalShader::new())],
         primitives: vec![
             Arc::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
             Arc::new(Aabb::new(

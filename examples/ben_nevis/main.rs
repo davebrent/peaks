@@ -25,7 +25,7 @@ use peaks::ops::{
 };
 use peaks::{
     transform_coords, HeightMap, Object, OrthographicCamera,
-    RegularGridSampler, Renderer, Scene, SdfMaterial, Texture, TextureMaterial,
+    RegularGridSampler, Renderer, Scene, SdfShader, Texture, TextureShader,
     Vec3,
 };
 
@@ -147,11 +147,11 @@ pub fn main() -> Result<()> {
         shape.project(transform, &height_map);
     }
 
-    let satelite_material =
-        TextureMaterial::new(satelite_transform, satelite_texture_linear);
+    let texture_shader =
+        TextureShader::new(satelite_transform, satelite_texture_linear);
 
-    let water_material = SdfMaterial::new(
-        satelite_material,
+    let water_shader = SdfShader::new(
+        texture_shader,
         water_polygons,
         0.0,
         Vec3::new(0.1, 0.4, 0.8),
@@ -161,8 +161,8 @@ pub fn main() -> Result<()> {
         3.0,
     );
 
-    let rivers_material = SdfMaterial::new(
-        water_material,
+    let river_shader = SdfShader::new(
+        water_shader,
         river_lines,
         12.0,
         Vec3::new(0.1, 0.4, 0.8),
@@ -172,8 +172,8 @@ pub fn main() -> Result<()> {
         3.0,
     );
 
-    let route_material = SdfMaterial::new(
-        rivers_material,
+    let route_shader = SdfShader::new(
+        river_shader,
         route_lines,
         50.0,
         Vec3::new(1.0, 1.0, 0.0),
@@ -186,7 +186,7 @@ pub fn main() -> Result<()> {
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
         objects: vec![Object::new(0, 0)],
-        materials: vec![Arc::new(route_material)],
+        shaders: vec![Arc::new(route_shader)],
         primitives: vec![Arc::new(HeightMap::new(transform, &height_map))],
     };
 

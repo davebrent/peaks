@@ -18,59 +18,59 @@ use primitives::Intersection;
 use shapes::Shape;
 use textures::{Bilinear, Texture};
 
-pub trait Material {
+pub trait Shader {
     /// Return a color for an intersection
     fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3;
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct NormalMaterial;
+pub struct NormalShader;
 
-impl NormalMaterial {
-    pub fn new() -> NormalMaterial {
-        NormalMaterial {}
+impl NormalShader {
+    pub fn new() -> NormalShader {
+        NormalShader {}
     }
 }
 
-impl Material for NormalMaterial {
+impl Shader for NormalShader {
     fn shade(&self, _: Ray, intersection: Intersection) -> Vec3 {
         (intersection.normal + 1.0) * 0.5
     }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
-pub struct BasicMaterial {
+pub struct ConstantShader {
     color: Vec3,
 }
 
-impl BasicMaterial {
-    pub fn new(color: Vec3) -> BasicMaterial {
-        BasicMaterial { color }
+impl ConstantShader {
+    pub fn new(color: Vec3) -> ConstantShader {
+        ConstantShader { color }
     }
 }
 
-impl Material for BasicMaterial {
+impl Shader for ConstantShader {
     fn shade(&self, _: Ray, _: Intersection) -> Vec3 {
         self.color
     }
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct TextureMaterial {
+pub struct TextureShader {
     transform: AffineTransform,
     texture: Texture<Vec3>,
 }
 
-impl TextureMaterial {
+impl TextureShader {
     pub fn new(
         transform: AffineTransform,
         texture: Texture<Vec3>,
-    ) -> TextureMaterial {
-        TextureMaterial { transform, texture }
+    ) -> TextureShader {
+        TextureShader { transform, texture }
     }
 }
 
-impl Material for TextureMaterial {
+impl Shader for TextureShader {
     fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3 {
         let point = ray.origin + ray.direction * intersection.t;
         let (u, v) = self.transform.inverse(point.x, point.z);
@@ -79,9 +79,9 @@ impl Material for TextureMaterial {
 }
 
 #[derive(Clone, Default)]
-pub struct SdfMaterial<M>
+pub struct SdfShader<M>
 where
-    M: Material + Clone + Default,
+    M: Shader + Clone + Default,
 {
     inner: M,
     shapes: Vec<Shape>,
@@ -93,9 +93,9 @@ where
     offset: f64,
 }
 
-impl<M> SdfMaterial<M>
+impl<M> SdfShader<M>
 where
-    M: Material + Clone + Default,
+    M: Shader + Clone + Default,
 {
     pub fn new(
         inner: M,
@@ -106,8 +106,8 @@ where
         stroke_width: f64,
         stroke_color: Vec3,
         offset: f64,
-    ) -> SdfMaterial<M> {
-        SdfMaterial {
+    ) -> SdfShader<M> {
+        SdfShader {
             inner,
             shapes,
             tolerance,
@@ -120,9 +120,9 @@ where
     }
 }
 
-impl<M> Material for SdfMaterial<M>
+impl<M> Shader for SdfShader<M>
 where
-    M: Material + Clone + Default,
+    M: Shader + Clone + Default,
 {
     fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3 {
         let point = ray.origin + ray.direction * intersection.t;

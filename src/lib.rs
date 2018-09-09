@@ -19,20 +19,17 @@ extern crate png;
 mod cameras;
 pub mod exec;
 pub mod io;
-mod materials;
 mod math;
 pub mod ops;
 mod primitives;
 mod render;
 mod samplers;
 mod scene;
+mod shaders;
 mod shapes;
 mod textures;
 
 pub use cameras::{OrthographicCamera, PinholeCamera};
-pub use materials::{
-    BasicMaterial, Material, NormalMaterial, SdfMaterial, TextureMaterial,
-};
 pub use math::{transform_coords, AffineTransform, Color, Ray, Vec3};
 pub use primitives::{
     Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,
@@ -40,5 +37,8 @@ pub use primitives::{
 pub use render::Renderer;
 pub use samplers::RegularGridSampler;
 pub use scene::{Object, Scene};
+pub use shaders::{
+    ConstantShader, NormalShader, SdfShader, Shader, TextureShader,
+};
 pub use shapes::{LineString, Point, Polygon, Ring, Shape};
 pub use textures::{Bilinear, Texture};

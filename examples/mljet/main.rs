@@ -19,7 +19,7 @@ use peaks::ops::{
     scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
 };
 use peaks::{
-    transform_coords, HeightMap, NormalMaterial, Object, PinholeCamera,
+    transform_coords, HeightMap, NormalShader, Object, PinholeCamera,
     RegularGridSampler, Renderer, Scene, Texture, Vec3,
 };
 use std::io::Result;
@@ -110,7 +110,7 @@ pub fn main() -> Result<()> {
     let scene = Scene {
         background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
         objects: vec![Object::new(0, 0)],
-        materials: vec![Arc::new(NormalMaterial::new())],
+        shaders: vec![Arc::new(NormalShader::new())],
         primitives: vec![Arc::new(height_map)],
     };
 
