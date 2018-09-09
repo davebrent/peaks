@@ -18,6 +18,7 @@ use math::Vec3;
 use primitives::Intersection;
 use samplers::Sampler;
 use scene::Scene;
+use shaders::{TraceInfo, Tracer};
 
 pub struct Renderer<C, S> {
     camera: C,
@@ -44,31 +45,54 @@ where
         let weight = 1.0 / self.sampler.amount() as f64;
 
         for (sub_x, sub_y) in self.sampler.samples() {
-            let mut index = 0;
-            let mut intersection = Intersection::none();
+            let px = x as f64 + sub_x;
+            let py = y as f64 + sub_y;
 
-            let ray = self.camera.cast_ray(x as f64 + sub_x, y as f64 + sub_y);
-            for (i, obj) in self.scene.objects.iter().enumerate() {
-                let primitive = &self.scene.primitives[obj.geometry];
-                if let Some(other) = primitive.intersects(ray) {
-                    if other.t < intersection.t && other.t > 0.0 {
-                        intersection = other;
-                        index = i;
-                    }
-                }
-            }
-
-            let sub_color = if intersection.is_none() {
-                self.scene.background
-            } else {
-                let object = &self.scene.objects[index];
+            let sub_color = if let Some(info) = self.trace(px, py) {
+                let object = &self.scene.objects[info.primitive];
                 let shader = &self.scene.shaders[object.shader];
-                shader.shade(ray, intersection)
+                shader.shade(self, &info)
+            } else {
+                self.scene.background
             };
 
             color += sub_color * weight;
         }
 
         color
+    }
+}
+
+impl<C, S> Tracer for Renderer<C, S>
+where
+    C: Camera,
+    S: Sampler,
+{
+    fn trace(&self, x: f64, y: f64) -> Option<TraceInfo> {
+        let mut index = 0;
+        let mut intersection = Intersection::none();
+
+        let ray = self.camera.cast_ray(x, y);
+        for (i, obj) in self.scene.objects.iter().enumerate() {
+            let primitive = &self.scene.primitives[obj.geometry];
+            if let Some(other) = primitive.intersects(ray) {
+                if other.t < intersection.t && other.t > 0.0 {
+                    intersection = other;
+                    index = i;
+                }
+            }
+        }
+
+        if intersection.is_none() {
+            None
+        } else {
+            Some(TraceInfo {
+                ray,
+                intersection,
+                primitive: index,
+                x,
+                y,
+            })
+        }
     }
 }

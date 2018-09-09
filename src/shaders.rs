@@ -18,9 +18,27 @@ use primitives::Intersection;
 use shapes::Shape;
 use textures::{Bilinear, Texture};
 
+pub struct TraceInfo {
+    /// The ray used to populate this object
+    pub ray: Ray,
+    /// Intersection with a primitive shape
+    pub intersection: Intersection,
+    /// Intersecting primitives id
+    pub primitive: usize,
+    /// X coordinate on the view plane
+    pub x: f64,
+    /// Y coordinate on the view plane
+    pub y: f64,
+}
+
+pub trait Tracer {
+    /// Returns information for tracing a ray specified in screen space
+    fn trace(&self, x: f64, y: f64) -> Option<TraceInfo>;
+}
+
 pub trait Shader {
-    /// Return a color for an intersection
-    fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3;
+    /// Return the resulting color for a ray trace
+    fn shade(&self, tracer: &Tracer, info: &TraceInfo) -> Vec3;
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -33,8 +51,8 @@ impl NormalShader {
 }
 
 impl Shader for NormalShader {
-    fn shade(&self, _: Ray, intersection: Intersection) -> Vec3 {
-        (intersection.normal + 1.0) * 0.5
+    fn shade(&self, _: &Tracer, info: &TraceInfo) -> Vec3 {
+        (info.intersection.normal + 1.0) * 0.5
     }
 }
 
@@ -50,7 +68,7 @@ impl ConstantShader {
 }
 
 impl Shader for ConstantShader {
-    fn shade(&self, _: Ray, _: Intersection) -> Vec3 {
+    fn shade(&self, _: &Tracer, _: &TraceInfo) -> Vec3 {
         self.color
     }
 }
@@ -71,8 +89,8 @@ impl TextureShader {
 }
 
 impl Shader for TextureShader {
-    fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3 {
-        let point = ray.origin + ray.direction * intersection.t;
+    fn shade(&self, _: &Tracer, info: &TraceInfo) -> Vec3 {
+        let point = info.ray.origin + info.ray.direction * info.intersection.t;
         let (u, v) = self.transform.inverse(point.x, point.z);
         self.texture.bilinear(u, v)
     }
@@ -124,9 +142,9 @@ impl<M> Shader for SdfShader<M>
 where
     M: Shader + Clone + Default,
 {
-    fn shade(&self, ray: Ray, intersection: Intersection) -> Vec3 {
-        let point = ray.origin + ray.direction * intersection.t;
-        let base = self.inner.shade(ray, intersection);
+    fn shade(&self, tracer: &Tracer, info: &TraceInfo) -> Vec3 {
+        let point = info.ray.origin + info.ray.direction * info.intersection.t;
+        let base = self.inner.shade(tracer, info);
 
         for shape in &self.shapes {
             if !shape.bbox().offset(self.offset).contains(point) {
