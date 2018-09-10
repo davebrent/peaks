@@ -144,6 +144,11 @@ impl Vec3 {
     pub fn angle(a: Vec3, b: Vec3) -> f64 {
         Vec3::dot(a, b).acos()
     }
+
+    #[inline(always)]
+    pub fn reflect(a: Vec3, n: Vec3) -> Vec3 {
+        a - n * 2.0 * Vec3::dot(a, n)
+    }
 }
 
 impl Add for Vec3 {

@@ -14,7 +14,7 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 use cameras::Camera;
-use math::Vec3;
+use math::{Ray, Vec3};
 use primitives::Intersection;
 use samplers::Sampler;
 use scene::Scene;
@@ -68,11 +68,10 @@ where
     C: Camera,
     S: Sampler,
 {
-    fn trace(&self, x: f64, y: f64) -> Option<TraceInfo> {
+    fn trace_ray(&self, ray: Ray, x: f64, y: f64) -> Option<TraceInfo> {
         let mut index = 0;
         let mut intersection = Intersection::none();
 
-        let ray = self.camera.cast_ray(x, y);
         for (i, obj) in self.scene.objects.iter().enumerate() {
             let primitive = &self.scene.primitives[obj.geometry];
             if let Some(other) = primitive.intersects(ray) {
@@ -94,5 +93,10 @@ where
                 y,
             })
         }
+    }
+
+    fn trace(&self, x: f64, y: f64) -> Option<TraceInfo> {
+        let ray = self.camera.cast_ray(x, y);
+        self.trace_ray(ray, x, y)
     }
 }

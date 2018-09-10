@@ -38,8 +38,8 @@ pub use render::Renderer;
 pub use samplers::{RayStencilSampler, RegularGridSampler, Sampler};
 pub use scene::{Object, Scene};
 pub use shaders::{
-    ConstantShader, FeatureLineShader, NormalShader, SdfShader, Shader,
-    TextureShader,
+    ConstantShader, DirectionalLight, FeatureLineShader, NormalShader,
+    PhongShader, SdfShader, Shader, TextureShader,
 };
 pub use shapes::{LineString, Point, Polygon, Ring, Shape};
 pub use textures::{Bilinear, Texture};

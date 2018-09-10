@@ -35,11 +35,34 @@ pub struct TraceInfo {
 pub trait Tracer {
     /// Returns information for tracing a ray specified in screen space
     fn trace(&self, x: f64, y: f64) -> Option<TraceInfo>;
+    /// Returns information for a ray trace
+    fn trace_ray(&self, ray: Ray, x: f64, y: f64) -> Option<TraceInfo>;
 }
 
 pub trait Shader {
     /// Return the resulting color for a ray trace
     fn shade(&self, tracer: &Tracer, info: &TraceInfo) -> Vec3;
+}
+
+#[derive(Copy, Clone, Debug, Default, PartialEq)]
+pub struct DirectionalLight {
+    direction: Vec3,
+    color: Vec3,
+    intensity: f64,
+}
+
+impl DirectionalLight {
+    pub fn new(
+        direction: Vec3,
+        color: Vec3,
+        intensity: f64,
+    ) -> DirectionalLight {
+        DirectionalLight {
+            direction,
+            color,
+            intensity,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug, Default)]
@@ -229,5 +252,94 @@ where
 
         let color = self.inner.shade(tracer, info);
         (color * (1.0 - edge_metric)) + (self.color * edge_metric)
+    }
+}
+
+#[derive(Clone, Default)]
+pub struct PhongShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    inner: M,
+    directional_lights: Vec<DirectionalLight>,
+    offset: f64,
+    ambient_color: Vec3,
+    specular_color: Vec3,
+    specular_exponent: f64,
+    ks: f64,
+    cel_shading: Option<(usize, f64)>,
+}
+
+impl<M> PhongShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    pub fn new(
+        inner: M,
+        directional_lights: Vec<DirectionalLight>,
+        offset: f64,
+        ambient_color: Vec3,
+        specular_color: Vec3,
+        specular_exponent: f64,
+        ks: f64,
+        cel_shading: Option<(usize, f64)>,
+    ) -> PhongShader<M> {
+        PhongShader {
+            inner,
+            directional_lights,
+            offset,
+            ambient_color,
+            specular_color,
+            specular_exponent,
+            ks,
+            cel_shading,
+        }
+    }
+}
+
+impl<M> Shader for PhongShader<M>
+where
+    M: Shader + Clone + Default,
+{
+    fn shade(&self, tracer: &Tracer, info: &TraceInfo) -> Vec3 {
+        let point = info.ray.origin + info.ray.direction * info.intersection.t;
+        let point = point + info.intersection.normal * self.offset;
+
+        let normal = info.intersection.normal;
+        let eye = info.ray.direction;
+
+        let mut diffuse = 0.0;
+        let mut specular = 0.0;
+
+        for light in &self.directional_lights {
+            let light_dir = light.direction;
+            let secondary = Ray::new(point, light_dir);
+            if tracer.trace_ray(secondary, info.x, info.y).is_some() {
+                continue;
+            }
+
+            let reflection = Vec3::reflect(light_dir, normal);
+            specular += Vec3::dot(reflection, eye).powf(self.specular_exponent)
+                * self.ks;
+            diffuse += Vec3::dot(light_dir, normal);
+        }
+
+        diffuse = diffuse.max(0.0).min(1.0);
+        specular = specular.max(0.0).min(1.0);
+
+        if let Some((bands, specular_threshold)) = self.cel_shading {
+            let interval = 1.0 / bands as f64;
+            diffuse = (diffuse / interval).round() * interval;
+            specular = if specular > specular_threshold {
+                1.0
+            } else {
+                0.0
+            };
+        }
+
+        let color = self.inner.shade(tracer, info);
+        self.ambient_color
+            + (color * diffuse)
+            + (self.specular_color * specular)
     }
 }

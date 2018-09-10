@@ -19,7 +19,7 @@ Peaks is a (work in progress) tool for rendering 3d maps.
 - [x] Draping shapes on terrain (signed distance fields)
 - [x] *.shp file loader
 - [x] Non photo realistic features outlines
-- [ ] Simple lighting
+- [x] Simple lighting
 - [ ] Realistic camera parameters (film gauge etc.)
 - [ ] Plan oblique view
 - [ ] Terrain bending
