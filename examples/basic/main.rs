@@ -16,9 +16,9 @@
 extern crate peaks;
 
 use peaks::{
-    Aabb, BilinearPatch, FeatureLineShader, NormalShader, Object,
-    PinholeCamera, Plane, RegularGridSampler, Renderer, Scene, Sphere, Texture,
-    Vec3,
+    Aabb, BilinearPatch, ConstantShader, DirectionalLight, FeatureLineShader,
+    Object, PhongShader, PinholeCamera, Plane, RegularGridSampler, Renderer,
+    Scene, Sphere, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -31,16 +31,40 @@ pub fn main() -> Result<()> {
     let width = 960;
     let height = 540;
 
+    let light = DirectionalLight::new(
+        Vec3::normalize(
+            Vec3::new(0.0, 0.0, 1.0)
+                .rotate_x(Vec3::zeros(), -33_f64.to_radians())
+                .rotate_y(Vec3::zeros(), 45_f64.to_radians()),
+        ),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+    );
+
+    let diffuse_shader = ConstantShader::new(Vec3::new(0.9, 0.9, 0.9));
+    let phong_shader = PhongShader::new(
+        diffuse_shader,
+        vec![light],
+        0.000001,
+        Vec3::new(0.1, 0.1, 0.1),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+        0.09,
+        None,
+    );
+
+    let line_shader = FeatureLineShader::new(
+        phong_shader.clone(),
+        Vec3::zeros(),
+        2,
+        0.75,
+        80_f64.to_radians(),
+        10_000.0,
+    );
+
     let scene = Scene {
         background: Vec3::new(1.0, 1.0, 1.0),
-        shaders: vec![Arc::new(FeatureLineShader::new(
-            NormalShader::new(),
-            Vec3::zeros(),
-            1,
-            0.5,
-            80_f64.to_radians(),
-            10_000.0,
-        ))],
+        shaders: vec![Arc::new(line_shader)],
         primitives: vec![
             Arc::new(Plane::new(Vec3::new(0.0, 1.0, 0.0), -5.0)),
             Arc::new(Aabb::new(

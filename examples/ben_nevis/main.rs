@@ -20,17 +20,14 @@ use std::path::Path;
 use std::sync::Arc;
 
 use peaks::ops::{
-    byte_stack_to_rgb, scale, smooth, srgb_to_linear,
-    terrain_generalise_weights, terrain_weighted_exaggeration,
+    scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
 };
 use peaks::{
-    transform_coords, HeightMap, Object, OrthographicCamera,
-    RegularGridSampler, Renderer, Scene, SdfShader, Texture, TextureShader,
-    Vec3,
+    transform_coords, ConstantShader, DirectionalLight, FeatureLineShader,
+    HeightMap, Object, OrthographicCamera, PhongShader, RegularGridSampler,
+    Renderer, Scene, SdfShader, Texture, Vec3,
 };
 
-const LAND_SAT_DATASET: &'static str =
-    "/home/webadmin/Shared/maps/ben_nevis/landsat.tif";
 const DEM_DATASET: &'static str =
     "/home/webadmin/Shared/maps/ben_nevis/dem.tif";
 const WATER_POLYGONS_DATASET: &'static str =
@@ -48,23 +45,6 @@ pub fn main() -> Result<()> {
 
     let cwd = Path::new(file!()).parent().unwrap();
     let output_dir = cwd.clone().join("output");
-
-    let (_, satelite_transform, rasters) =
-        peaks::io::gdal::import(LAND_SAT_DATASET, &[1, 2, 3]).unwrap();
-
-    let sat_width = rasters[0].width;
-    let sat_height = rasters[0].height;
-
-    let mut satelite_texture_color = Texture::blank(sat_width, sat_height);
-    let mut satelite_texture_linear = Texture::blank(sat_width, sat_height);
-
-    byte_stack_to_rgb(
-        &rasters[0],
-        &rasters[1],
-        &rasters[2],
-        &mut satelite_texture_color,
-    );
-    srgb_to_linear(&satelite_texture_color, &mut satelite_texture_linear);
 
     let camera_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
     let (proj4, transform, rasters) =
@@ -147,17 +127,46 @@ pub fn main() -> Result<()> {
         shape.project(transform, &height_map);
     }
 
-    let texture_shader =
-        TextureShader::new(satelite_transform, satelite_texture_linear);
+    let light = DirectionalLight::new(
+        Vec3::normalize(
+            Vec3::new(0.0, 0.0, 1.0)
+                .rotate_x(Vec3::zeros(), (-45_f64).to_radians())
+                .rotate_y(Vec3::zeros(), (225_f64).to_radians()),
+        ),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+    );
+
+    let texture_shader = ConstantShader::new(Vec3::new(0.9, 0.9, 0.9));
+
+    let phong_shader = PhongShader::new(
+        texture_shader,
+        vec![light],
+        1.0e6,
+        Vec3::new(0.2, 0.2, 0.2),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+        0.09,
+        Some((4, 0.6)),
+    );
+
+    let lines_shader = FeatureLineShader::new(
+        phong_shader,
+        Vec3::zeros(),
+        2,
+        0.75,
+        35_f64.to_radians(),
+        400.0,
+    );
 
     let water_shader = SdfShader::new(
-        texture_shader,
+        lines_shader,
         water_polygons,
         0.0,
         Vec3::new(0.1, 0.4, 0.8),
         1.0,
-        25.0,
-        Vec3::new(0.1, 0.4, 0.8) * 0.3,
+        0.0,
+        Vec3::zeros(),
         3.0,
     );
 
@@ -175,11 +184,11 @@ pub fn main() -> Result<()> {
     let route_shader = SdfShader::new(
         river_shader,
         route_lines,
-        50.0,
-        Vec3::new(1.0, 1.0, 0.0),
+        30.0,
+        Vec3::new(1.0, 0.0, 0.0),
         1.0,
-        25.0,
-        Vec3::new(0.3, 0.3, 0.0),
+        0.0,
+        Vec3::zeros(),
         100.0,
     );
 
