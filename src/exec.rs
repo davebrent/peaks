@@ -15,11 +15,16 @@
 
 use cameras::Camera;
 use math::Vec3;
+use ops::{blit, blit_region};
 use render::Renderer;
 use samplers::Sampler;
+use textures::{Texture, TileIterator};
+
 use std::io::{self, Write};
+use std::sync::mpsc::{channel, Sender};
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::time::{Duration, Instant};
-use textures::Texture;
 
 struct ProgressCounter {
     out: io::Stdout,
@@ -107,21 +112,16 @@ impl ProgressCounter {
     }
 }
 
-pub fn render<C, S>(
-    width: usize,
-    height: usize,
-    renderer: &Renderer<C, S>,
-    image: &mut Texture<Vec3>,
-) -> bool
+pub fn render<C, S>(image: &mut Texture<Vec3>, renderer: &Renderer<C, S>)
 where
-    C: 'static + Camera,
-    S: 'static + Sampler,
+    C: Camera,
+    S: Sampler,
 {
-    let mut progress = ProgressCounter::new(30, width * height);
+    let mut progress = ProgressCounter::new(30, image.width * image.height);
     let mut completed = 0;
 
-    for y in 0..height {
-        for x in 0..width {
+    for y in 0..image.height {
+        for x in 0..image.width {
             let color = renderer.pixel(x, y);
             image.write1x1(x, y, color);
             completed += 1;
@@ -130,5 +130,92 @@ where
     }
 
     progress.finish();
-    true
+}
+
+struct RenderState {
+    surface: Texture<Vec3>,
+    tiles: TileIterator,
+}
+
+fn worker<C, S>(
+    state: &Arc<Mutex<RenderState>>,
+    renderer: &Renderer<C, S>,
+    sender: &Sender<usize>,
+    tile_size: usize,
+) where
+    C: 'static + Camera + Clone,
+    S: 'static + Sampler + Clone,
+{
+    let mut local = Texture::blank(tile_size, tile_size);
+    let mut work = { state.lock().unwrap().tiles.next() };
+
+    while let Some(tile) = work {
+        for y in 0..tile.height {
+            for x in 0..tile.width {
+                let pixel = renderer.pixel(tile.x + x, tile.y + y);
+                local.write1x1(x, y, pixel);
+            }
+        }
+        {
+            let mut state_ = state.lock().unwrap();
+            blit_region(
+                &local,
+                &mut state_.surface,
+                tile.x,
+                tile.y,
+                tile.width,
+                tile.height,
+            );
+            work = state_.tiles.next();
+        }
+        sender.send(tile.width * tile.height).unwrap();
+    }
+}
+
+pub fn render_threaded<C, S>(
+    output: &mut Texture<Vec3>,
+    renderer: &Renderer<C, S>,
+    num_workers: usize,
+    tile_size: usize,
+) where
+    C: 'static + Camera + Clone,
+    S: 'static + Sampler + Clone,
+{
+    let width = output.width;
+    let height = output.height;
+    let total = width * height;
+
+    let state = Arc::new(Mutex::new(RenderState {
+        surface: Texture::blank(width, height),
+        tiles: output.tiles(tile_size),
+    }));
+
+    let (sender, receiver) = channel();
+    let mut workers = Vec::with_capacity(num_workers);
+    for _ in 0..num_workers {
+        let state_ = state.clone();
+        let renderer_ = renderer.clone();
+        let sender_ = sender.clone();
+        workers.push(thread::spawn(move || {
+            worker(&state_, &renderer_, &sender_, tile_size);
+        }));
+    }
+
+    let mut progress = ProgressCounter::new(30, total);
+    let mut completed = 0;
+    while let Ok(rendered) = receiver.recv() {
+        completed += rendered;
+        progress.update(completed);
+        if completed == total {
+            break;
+        }
+    }
+
+    for worker in workers {
+        worker.join().unwrap();
+    }
+
+    let state = state.lock().unwrap();
+    blit(&state.surface, output, 0, 0);
+    progress.finish();
 }

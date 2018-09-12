@@ -15,10 +15,12 @@
 
 extern crate peaks;
 
+use peaks::io::png::export;
+use peaks::ops::linear_to_srgb;
 use peaks::{
-    Aabb, BilinearPatch, ConstantShader, DirectionalLight, FeatureLineShader,
-    Object, PhongShader, PinholeCamera, Plane, RegularGridSampler, Renderer,
-    Scene, Sphere, Texture, Vec3,
+    render_threaded, Aabb, BilinearPatch, ConstantShader, DirectionalLight,
+    FeatureLineShader, Object, PhongShader, PinholeCamera, Plane,
+    RegularGridSampler, Renderer, Scene, Sphere, Texture, Vec3,
 };
 use std::io::Result;
 use std::path::Path;
@@ -102,15 +104,10 @@ pub fn main() -> Result<()> {
     let sampler = RegularGridSampler::new(16);
     let renderer = Renderer::new(scene, camera, sampler);
 
-    let mut render_surface = Texture::blank(width, height);
+    let mut surface = Texture::blank(width, height);
     let mut output = Texture::blank(width, height);
 
-    assert!(peaks::exec::render(
-        width,
-        height,
-        &renderer,
-        &mut render_surface
-    ));
-    peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
+    render_threaded(&mut surface, &renderer, 4, 8);
+    linear_to_srgb(&surface, &mut output);
+    export(&output_dir.clone().join("render.png"), &output)
 }

@@ -92,6 +92,26 @@ where
     }
 }
 
+/// Blit one texture onto another
+pub fn blit_region<T>(
+    input: &Texture<T>,
+    output: &mut Texture<T>,
+    x: usize,
+    y: usize,
+    w: usize,
+    h: usize,
+) where
+    T: Copy + Default,
+{
+    for src_y in 0..h {
+        let src_offset = input.width * src_y;
+        let dest_offset = output.width * (src_y + y) + x;
+        let dest = &mut output.buffer[dest_offset..dest_offset + w];
+        let row = &input.buffer[src_offset..src_offset + w];
+        dest.copy_from_slice(row);
+    }
+}
+
 /// Create map of bilinear patches and its first mipmap level from a height map
 pub fn height_map_to_bilinear_patch(
     input: &Texture<f64>,

@@ -19,13 +19,15 @@ use std::io::Result;
 use std::path::Path;
 use std::sync::Arc;
 
+use peaks::io::png::export;
 use peaks::ops::{
-    scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
+    linear_to_srgb, scale, smooth, terrain_generalise_weights,
+    terrain_weighted_exaggeration,
 };
 use peaks::{
-    transform_coords, ConstantShader, DirectionalLight, FeatureLineShader,
-    HeightMap, Object, OrthographicCamera, PhongShader, RegularGridSampler,
-    Renderer, Scene, SdfShader, Texture, Vec3,
+    render_threaded, transform_coords, ConstantShader, DirectionalLight,
+    FeatureLineShader, HeightMap, Object, OrthographicCamera, PhongShader,
+    RegularGridSampler, Renderer, Scene, SdfShader, Texture, Vec3,
 };
 
 const DEM_DATASET: &'static str =
@@ -153,7 +155,7 @@ pub fn main() -> Result<()> {
     let lines_shader = FeatureLineShader::new(
         phong_shader,
         Vec3::zeros(),
-        2,
+        1,
         0.75,
         35_f64.to_radians(),
         400.0,
@@ -202,15 +204,10 @@ pub fn main() -> Result<()> {
     let sampler = RegularGridSampler::new(num_samples);
     let renderer = Renderer::new(scene, camera, sampler);
 
-    let mut render_surface = Texture::blank(width, height);
     let mut output = Texture::blank(width, height);
+    let mut surface = Texture::blank(width, height);
 
-    assert!(peaks::exec::render(
-        width,
-        height,
-        &renderer,
-        &mut render_surface
-    ));
-    peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
+    render_threaded(&mut surface, &renderer, 4, 8);
+    linear_to_srgb(&surface, &mut output);
+    export(&output_dir.clone().join("render.png"), &output)
 }

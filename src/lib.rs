@@ -30,6 +30,7 @@ mod shapes;
 mod textures;
 
 pub use cameras::{OrthographicCamera, PinholeCamera};
+pub use exec::{render, render_threaded};
 pub use math::{transform_coords, AffineTransform, Color, Ray, Vec3};
 pub use primitives::{
     Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,

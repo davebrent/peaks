@@ -15,11 +15,13 @@
 
 extern crate peaks;
 
+use peaks::io::png::export;
 use peaks::ops::{
-    scale, smooth, terrain_generalise_weights, terrain_weighted_exaggeration,
+    linear_to_srgb, scale, smooth, terrain_generalise_weights,
+    terrain_weighted_exaggeration,
 };
 use peaks::{
-    transform_coords, HeightMap, NormalShader, Object, PinholeCamera,
+    render, transform_coords, HeightMap, NormalShader, Object, PinholeCamera,
     RegularGridSampler, Renderer, Scene, Texture, Vec3,
 };
 use std::io::Result;
@@ -117,15 +119,10 @@ pub fn main() -> Result<()> {
     let sampler = RegularGridSampler::new(num_samples);
     let renderer = Renderer::new(scene, camera, sampler);
 
-    let mut render_surface = Texture::blank(width, height);
+    let mut surface = Texture::blank(width, height);
     let mut output = Texture::blank(width, height);
 
-    assert!(peaks::exec::render(
-        width,
-        height,
-        &renderer,
-        &mut render_surface
-    ));
-    peaks::ops::linear_to_srgb(&render_surface, &mut output);
-    peaks::io::png::export(&output_dir.clone().join("render.png"), &output)
+    render(&mut surface, &renderer);
+    linear_to_srgb(&surface, &mut output);
+    export(&output_dir.clone().join("render.png"), &output)
 }

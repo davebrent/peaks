@@ -20,10 +20,24 @@ use samplers::Sampler;
 use scene::Scene;
 use shaders::{TraceInfo, Tracer};
 
+#[derive(Clone)]
 pub struct Renderer<C, S> {
     camera: C,
     scene: Scene,
     sampler: S,
+}
+
+unsafe impl<C, S> Send for Renderer<C, S>
+where
+    C: Camera,
+    S: Sampler,
+{
+}
+unsafe impl<C, S> Sync for Renderer<C, S>
+where
+    C: Camera,
+    S: Sampler,
+{
 }
 
 impl<C, S> Renderer<C, S>
