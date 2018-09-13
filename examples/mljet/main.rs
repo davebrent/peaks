@@ -21,12 +21,19 @@ use peaks::ops::{
     terrain_weighted_exaggeration,
 };
 use peaks::{
-    render, transform_coords, HeightMap, NormalShader, Object, PinholeCamera,
-    RegularGridSampler, Renderer, Scene, Texture, Vec3,
+    render_threaded, transform_coords, ConstantShader, DirectionalLight,
+    FeatureLineShader, HeightMap, Object, PhongShader, OrthographicCamera,
+    RegularGridSampler, Renderer, Scene, SdfShader, Texture, Vec3,
 };
+
 use std::io::Result;
 use std::path::Path;
 use std::sync::Arc;
+
+const DEM_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/mljet/dem.tif";
+const WATER_POLYGONS_DATASET: &'static str =
+    "/home/webadmin/Shared/maps/mljet/water-polygons";
 
 pub fn main() -> Result<()> {
     let width = 960;
@@ -35,12 +42,10 @@ pub fn main() -> Result<()> {
     let vertical_exageration = 1.25;
 
     let cwd = Path::new(file!()).parent().unwrap();
-    let data_dir = cwd.clone().join("data");
     let output_dir = cwd.clone().join("output");
 
     let (proj4, transform, rasters) =
-        peaks::io::gdal::import(&data_dir.clone().join("heightmap.tif"), &[1])
-            .unwrap();
+        peaks::io::gdal::import(DEM_DATASET, &[1]).unwrap();
     let raw_height_data = &rasters[0];
 
     let mut height_map =
@@ -53,7 +58,6 @@ pub fn main() -> Result<()> {
         Texture::blank(raw_height_data.width, raw_height_data.height);
 
     let pixel_size = transform.unit_size().0;
-
     let pre_smoothing = 12;
     let post_smoothing = 1;
     let slope_amp = 8.0;
@@ -82,37 +86,86 @@ pub fn main() -> Result<()> {
     scale(&exagerated, &mut height_map, vertical_exageration);
 
     let camera_proj4 = "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs";
-
-    let (eye_lat, eye_lon) = transform_coords(
-        17.340803146362305,
-        42.77064408352934,
-        &camera_proj4,
-        &proj4,
-    );
-
     let (look_lat, look_lon) = transform_coords(
-        17.351274490356445,
-        42.78267713877303,
+        17.35668182373047,
+        42.77461336018116,
         &camera_proj4,
         &proj4,
     );
 
-    let camera = PinholeCamera::new(
+    let camera_look_at = Vec3::new(look_lat, 380.0, look_lon * -1.0);
+    let axis = Vec3::new(0.0, 0.0, 1.0)
+        .rotate_x(Vec3::zeros(), (-25_f64).to_radians())
+        .rotate_y(Vec3::zeros(), (-38_f64).to_radians());
+    let camera_position = camera_look_at + axis * 7_000.0;
+
+    let camera = OrthographicCamera::new(
         width,
         height,
-        Vec3::new(eye_lat, 2_000.0, eye_lon * -1.0),
-        Vec3::new(look_lat, 0.0, look_lon * -1.0),
-        90.0_f64.to_radians(),
+        camera_position,
+        camera_look_at,
         1.0,
         Vec3::new(0.0, 1.0, 0.0),
+        2_200.0,
+    );
+
+    let mut water_polygons =
+        peaks::io::ogr::import(WATER_POLYGONS_DATASET, &[0]).unwrap()[0]
+            .to_vec();
+
+    for shape in &mut water_polygons {
+        shape.project(transform, &height_map);
+    }
+
+    let light = DirectionalLight::new(
+        Vec3::normalize(
+            Vec3::new(0.0, 0.0, 1.0)
+                .rotate_x(Vec3::zeros(), (-45_f64).to_radians())
+                .rotate_y(Vec3::zeros(), (225_f64).to_radians()),
+        ),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+    );
+
+    let texture_shader = ConstantShader::new(Vec3::new(0.9, 0.9, 0.9));
+
+    let phong_shader = PhongShader::new(
+        texture_shader,
+        vec![light],
+        1.0e6,
+        Vec3::new(0.2, 0.2, 0.2),
+        Vec3::new(1.0, 1.0, 1.0),
+        1.0,
+        0.09,
+        Some((4, 0.6)),
+    );
+
+    let lines_shader = FeatureLineShader::new(
+        phong_shader,
+        Vec3::zeros(),
+        1,
+        0.75,
+        25_f64.to_radians(),
+        75.0,
+    );
+
+    let water_shader = SdfShader::new(
+        lines_shader,
+        water_polygons,
+        0.0,
+        Vec3::new(0.1, 0.4, 0.8),
+        1.0,
+        10.0,
+        Vec3::new(0.1, 0.1, 0.1),
+        30.0,
     );
 
     let height_map = HeightMap::new(transform, &height_map);
 
     let scene = Scene {
-        background: Vec3::new(254.0, 254.0, 200.0) / 255.0,
+        background: Vec3::new(0.1, 0.4, 0.8),
         objects: vec![Object::new(0, 0)],
-        shaders: vec![Arc::new(NormalShader::new())],
+        shaders: vec![Arc::new(water_shader)],
         primitives: vec![Arc::new(height_map)],
     };
 
@@ -122,7 +175,7 @@ pub fn main() -> Result<()> {
     let mut surface = Texture::blank(width, height);
     let mut output = Texture::blank(width, height);
 
-    render(&mut surface, &renderer);
+    render_threaded(&mut surface, &renderer, 4, 8);
     linear_to_srgb(&surface, &mut output);
     export(&output_dir.clone().join("render.png"), &output)
 }
