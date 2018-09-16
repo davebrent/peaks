@@ -15,6 +15,7 @@
 
 use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
+use options::SphereOpts;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
 pub struct Sphere {
@@ -25,6 +26,12 @@ pub struct Sphere {
 impl Sphere {
     pub fn new(position: Vec3, radius: f64) -> Sphere {
         Sphere { position, radius }
+    }
+}
+
+impl From<SphereOpts> for Sphere {
+    fn from(options: SphereOpts) -> Sphere {
+        Sphere::new(From::from(options.position), options.radius)
     }
 }
 

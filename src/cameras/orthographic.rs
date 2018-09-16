@@ -15,6 +15,7 @@
 
 use super::camera::Camera;
 use math::{Ray, Vec3};
+use options::OrthographicCameraOpts;
 
 #[derive(Copy, Clone, Debug)]
 pub struct OrthographicCamera {
@@ -75,6 +76,10 @@ impl OrthographicCamera {
 }
 
 impl Camera for OrthographicCamera {
+    fn view_plane(&self) -> (usize, usize) {
+        (self.width, self.height)
+    }
+
     fn cast_ray(&self, x: f64, y: f64) -> Ray {
         let mut px = x / self.width as f64 * 2.0 - 1.0;
         let mut py = 1.0 - y / self.height as f64 * 2.0;
@@ -84,5 +89,19 @@ impl Camera for OrthographicCamera {
 
         let position = self.u * px + self.v * py;
         Ray::new(self.position + position, -self.w)
+    }
+}
+
+impl From<OrthographicCameraOpts> for OrthographicCamera {
+    fn from(options: OrthographicCameraOpts) -> OrthographicCamera {
+        OrthographicCamera::new(
+            options.width,
+            options.height,
+            From::from(options.position),
+            From::from(options.look_at),
+            options.view_distance,
+            From::from(options.up),
+            options.view_plane_size,
+        )
     }
 }

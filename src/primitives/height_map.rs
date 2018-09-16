@@ -16,12 +16,14 @@
 use super::aabb::Aabb;
 use super::bilinear_patch::BilinearPatch;
 use super::primitive::{Intersection, Primitive};
+
+use io::gdal;
 use math::{AffineTransform, Ray, Vec3};
-use ops::{
-    blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch, normals,
-};
+use ops::{blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch};
+use options::{HeightMapOpts, Loader};
+use textures::Texture;
+
 use std::cmp;
-use textures::{Bilinear, Texture};
 
 fn ceil_pow2(num: usize) -> usize {
     let num = num as f64;
@@ -32,8 +34,6 @@ fn ceil_pow2(num: usize) -> usize {
 pub struct HeightMap {
     /// A transform from world space coordinates to raster space
     pub transform: AffineTransform,
-    /// Normal values for the terrain
-    pub normal_map: Texture<Vec3>,
     /// Map containing bilinear patches
     pub bilinear_patches: Texture<[f64; 4]>,
     /// Maximum mipmaps for the bilinear patches
@@ -45,12 +45,6 @@ impl HeightMap {
         transform: AffineTransform,
         height_map: &Texture<f64>,
     ) -> HeightMap {
-        // Generate a normal map from the height map
-        let mut normal_map =
-            Texture::blank(height_map.width, height_map.height);
-        let (px, py) = transform.unit_size();
-        normals(height_map, &mut normal_map, px, py);
-
         // Round the height map size to the nearest power of two
         let height_map_size = height_map.width.max(height_map.height);
         let mut size = ceil_pow2(height_map_size);
@@ -82,10 +76,24 @@ impl HeightMap {
 
         HeightMap {
             transform,
-            normal_map,
             bilinear_patches,
             maximum_mipmaps,
         }
+    }
+}
+
+impl From<HeightMapOpts> for HeightMap {
+    fn from(options: HeightMapOpts) -> HeightMap {
+        let (transform, texture) = match options.data {
+            Loader::Gdal(opts) => {
+                let (_, transform, rasters) =
+                    gdal::import(opts.filepath, &[opts.band]).unwrap();
+                (transform, rasters[0].clone())
+            }
+            _ => panic!("Unsupported format"),
+        };
+
+        HeightMap::new(transform, &texture)
     }
 }
 
@@ -151,12 +159,7 @@ impl Primitive for HeightMap {
                 let sw = Vec3::new(min_x, sw, max_z);
                 let patch = BilinearPatch::new(nw, ne, se, sw);
                 match patch.intersects(ray) {
-                    Some(intersection) => {
-                        let point = ray.origin + ray.direction * intersection.t;
-                        let (x, y) = self.transform.inverse(point.x, point.z);
-                        let normal = self.normal_map.bilinear(x, y);
-                        return Some(Intersection::new(intersection.t, normal));
-                    }
+                    Some(intersection) => return Some(intersection),
                     _ => continue,
                 };
             } else {

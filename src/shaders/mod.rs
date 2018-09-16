@@ -13,9 +13,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use math::Ray;
+mod constant;
+mod feature_lines;
+mod normal;
+mod phong;
+mod sdf;
+mod shader;
+mod texture;
 
-pub trait Camera {
-    fn view_plane(&self) -> (usize, usize);
-    fn cast_ray(&self, x: f64, y: f64) -> Ray;
-}
+pub use self::constant::ConstantShader;
+pub use self::feature_lines::FeatureLineShader;
+pub use self::normal::NormalShader;
+pub use self::phong::PhongShader;
+pub use self::sdf::SdfShader;
+pub use self::shader::{Shader, TraceInfo, Tracer};
+pub use self::texture::TextureShader;

@@ -17,12 +17,12 @@ use math::{AffineTransform, Vec3};
 use std::f64::INFINITY;
 use textures::{Bilinear, Texture};
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Point {
     point: Vec3,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rect {
     x0y0: Vec3,
     x1y0: Vec3,
@@ -30,24 +30,25 @@ pub struct Rect {
     x0y1: Vec3,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct LineString {
     points: Vec<Vec3>,
     bounds: Rect,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Ring {
     line: LineString,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Polygon {
     exterior: Ring,
     holes: Vec<Ring>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
 pub enum Shape {
     Point(Point),
     LineString(LineString),

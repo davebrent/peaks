@@ -15,6 +15,7 @@
 
 use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
+use options::BilinearPatchOpts;
 
 pub struct BilinearPatch {
     p00: Vec3,
@@ -135,6 +136,17 @@ impl BilinearPatch {
         }
 
         None
+    }
+}
+
+impl From<BilinearPatchOpts> for BilinearPatch {
+    fn from(options: BilinearPatchOpts) -> BilinearPatch {
+        BilinearPatch::new(
+            From::from(options.nw),
+            From::from(options.ne),
+            From::from(options.se),
+            From::from(options.sw),
+        )
     }
 }
 

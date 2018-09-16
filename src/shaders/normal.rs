@@ -13,9 +13,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use math::Ray;
+use super::shader::{Shader, TraceInfo, Tracer};
+use math::Vec3;
+use options::NormalShaderOpts;
 
-pub trait Camera {
-    fn view_plane(&self) -> (usize, usize);
-    fn cast_ray(&self, x: f64, y: f64) -> Ray;
+#[derive(Copy, Clone, Debug, Default)]
+pub struct NormalShader;
+
+impl NormalShader {
+    pub fn new() -> NormalShader {
+        NormalShader {}
+    }
+}
+
+impl From<NormalShaderOpts> for NormalShader {
+    fn from(_: NormalShaderOpts) -> NormalShader {
+        NormalShader::new()
+    }
+}
+
+impl Shader for NormalShader {
+    fn shade(&self, _: &Tracer, info: &TraceInfo) -> Vec3 {
+        (info.intersection.normal + 1.0) * 0.5
+    }
 }

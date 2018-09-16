@@ -1,0 +1,107 @@
+{
+    "background": [1, 1, 1],
+    "camera": {
+        "type": "orthographic",
+        "width": 960,
+        "height": 540,
+        "position": [372696.9331642127, 3338.327832184896, -6300444.656251427],
+        "look_at": [377696.19514004944, 380.0, -6296538.804726564],
+        "view_plane_size": 3700,
+        "view_distance": 1,
+        "up": [0, 1, 0]
+    },
+    "lights": [
+        {
+            "type": "directional",
+            "intensity": 1,
+            "direction": [-0.5, 0.7071067811865475, -0.5000000000000001]
+        }
+    ],
+    "shaders": [
+        {
+            "type": "constant",
+            "color": [0.9, 0.9, 0.9]
+        },
+        {
+            "type": "phong",
+            "wraps": 0,
+            "lights": [0],
+            "bias": 0.000001,
+            "ambient": [0.2, 0.2, 0.2],
+            "specular_color": [1.0, 1.0, 1.0],
+            "specular_exponent": 1.0,
+            "ks": 0.09,
+            "cel_shading": [4, 0.8]
+        },
+        {
+            "type": "feature_lines",
+            "wraps": 1,
+            "color": [0, 0, 0],
+            "quality": 1,
+            "radius": 0.75,
+            "crease_threshold": 0.6108652381980153,
+            "self_silhoutte_threshold": 400
+        },
+        {
+            "type": "sdf",
+            "wraps": 2,
+            "data": {
+                "type": "shp",
+                "layer": 0,
+                "filepath": "/home/webadmin/Shared/maps/ben_nevis/water-polygons"
+            },
+            "tolerance": 0,
+            "color": [0.1, 0.4, 0.8],
+            "alpha": 1,
+            "stroke_width": 0,
+            "stroke_color": [0, 0, 0],
+            "offset": 3
+        },
+        {
+            "type": "sdf",
+            "wraps": 3,
+            "data": {
+                "type": "shp",
+                "layer": 0,
+                "filepath": "/home/webadmin/Shared/maps/ben_nevis/rivers.geojson"
+            },
+            "tolerance": 12,
+            "color": [0.1, 0.4, 0.8],
+            "alpha": 1,
+            "stroke_width": 0,
+            "stroke_color": [0, 0, 0],
+            "offset": 12
+        },
+        {
+            "type": "sdf",
+            "wraps": 4,
+            "data": {
+                "type": "shp",
+                "layer": 0,
+                "filepath": "/home/webadmin/Shared/maps/ben_nevis/route"
+            },
+            "tolerance": 30,
+            "color": [1.0, 0.0, 0.0],
+            "alpha": 1,
+            "stroke_width": 0,
+            "stroke_color": [0, 0, 0],
+            "offset": 100
+        }
+    ],
+    "primitives": [
+        {
+            "type": "height_map",
+            "data": {
+                "type": "gdal",
+                "filepath": "/home/webadmin/Shared/maps/ben_nevis/dem.tif",
+                "band": 1
+            }
+        }
+    ],
+    "objects": [
+        {
+            "primitive": 0,
+            "shader": 5
+        }
+    ]
+}

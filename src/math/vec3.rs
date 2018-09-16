@@ -19,7 +19,7 @@ use std::ops::{
     Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign,
 };
 
-#[derive(Copy, Clone, Debug, Default, PartialEq)]
+#[derive(Copy, Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -276,6 +276,12 @@ impl Neg for Vec3 {
     #[inline(always)]
     fn neg(self) -> Vec3 {
         Vec3::new(-self.x, -self.y, -self.z)
+    }
+}
+
+impl From<[f64; 3]> for Vec3 {
+    fn from(other: [f64; 3]) -> Vec3 {
+        Vec3::new(other[0], other[1], other[2])
     }
 }
 

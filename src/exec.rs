@@ -13,7 +13,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use cameras::Camera;
 use math::Vec3;
 use ops::{blit, blit_region};
 use render::Renderer;
@@ -112,9 +111,8 @@ impl ProgressCounter {
     }
 }
 
-pub fn render<C, S>(image: &mut Texture<Vec3>, renderer: &Renderer<C, S>)
+pub fn render<S>(image: &mut Texture<Vec3>, renderer: &Renderer<S>)
 where
-    C: Camera,
     S: Sampler,
 {
     let mut progress = ProgressCounter::new(30, image.width * image.height);
@@ -137,13 +135,12 @@ struct RenderState {
     tiles: TileIterator,
 }
 
-fn worker<C, S>(
+fn worker<S>(
     state: &Arc<Mutex<RenderState>>,
-    renderer: &Renderer<C, S>,
+    renderer: &Renderer<S>,
     sender: &Sender<usize>,
     tile_size: usize,
 ) where
-    C: 'static + Camera + Clone,
     S: 'static + Sampler + Clone,
 {
     let mut local = Texture::blank(tile_size, tile_size);
@@ -172,13 +169,12 @@ fn worker<C, S>(
     }
 }
 
-pub fn render_threaded<C, S>(
+pub fn render_threaded<S>(
     output: &mut Texture<Vec3>,
-    renderer: &Renderer<C, S>,
+    renderer: &Renderer<S>,
     num_workers: usize,
     tile_size: usize,
 ) where
-    C: 'static + Camera + Clone,
     S: 'static + Sampler + Clone,
 {
     let width = output.width;

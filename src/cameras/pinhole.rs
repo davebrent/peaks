@@ -15,6 +15,7 @@
 
 use super::camera::Camera;
 use math::{Ray, Vec3};
+use options::PerspectiveCameraOpts;
 
 #[derive(Copy, Clone, Debug)]
 pub struct PinholeCamera {
@@ -78,6 +79,10 @@ impl PinholeCamera {
 }
 
 impl Camera for PinholeCamera {
+    fn view_plane(&self) -> (usize, usize) {
+        (self.width, self.height)
+    }
+
     fn cast_ray(&self, x: f64, y: f64) -> Ray {
         // Raster to NDC space
         let mut px = x / self.width as f64 * 2.0 - 1.0;
@@ -89,5 +94,19 @@ impl Camera for PinholeCamera {
 
         let dir = self.u * px + self.v * py - self.w * self.view_distance;
         Ray::new(self.position, Vec3::normalize(dir))
+    }
+}
+
+impl From<PerspectiveCameraOpts> for PinholeCamera {
+    fn from(options: PerspectiveCameraOpts) -> PinholeCamera {
+        PinholeCamera::new(
+            options.width,
+            options.height,
+            From::from(options.position),
+            From::from(options.look_at),
+            options.fov,
+            options.view_distance,
+            From::from(options.up),
+        )
     }
 }

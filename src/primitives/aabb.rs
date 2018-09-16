@@ -15,6 +15,8 @@
 
 use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
+use options::AabbOpts;
+
 use std::f64::INFINITY;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -34,6 +36,12 @@ impl Aabb {
             self.min.y + (self.max.y - self.min.y) / 2.0,
             self.min.z + (self.max.z - self.min.z) / 2.0,
         )
+    }
+}
+
+impl From<AabbOpts> for Aabb {
+    fn from(options: AabbOpts) -> Aabb {
+        Aabb::new(From::from(options.min), From::from(options.max))
     }
 }
 

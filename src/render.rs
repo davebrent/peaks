@@ -13,44 +13,36 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use cameras::Camera;
+use lights::DirectionalLight;
 use math::{Ray, Vec3};
 use primitives::Intersection;
 use samplers::Sampler;
 use scene::Scene;
-use shaders::{TraceInfo, Tracer};
+use shaders::{Shader, TraceInfo, Tracer};
 
 #[derive(Clone)]
-pub struct Renderer<C, S> {
-    camera: C,
+pub struct Renderer<S> {
     scene: Scene,
     sampler: S,
 }
 
-unsafe impl<C, S> Send for Renderer<C, S>
+unsafe impl<S> Send for Renderer<S>
 where
-    C: Camera,
     S: Sampler,
 {
 }
-unsafe impl<C, S> Sync for Renderer<C, S>
+unsafe impl<S> Sync for Renderer<S>
 where
-    C: Camera,
     S: Sampler,
 {
 }
 
-impl<C, S> Renderer<C, S>
+impl<S> Renderer<S>
 where
-    C: Camera,
     S: Sampler,
 {
-    pub fn new(scene: Scene, camera: C, sampler: S) -> Renderer<C, S> {
-        Renderer {
-            sampler,
-            scene,
-            camera,
-        }
+    pub fn new(scene: Scene, sampler: S) -> Renderer<S> {
+        Renderer { sampler, scene }
     }
 
     /// Return a color for a pixel
@@ -62,7 +54,7 @@ where
             let px = x as f64 + sub_x;
             let py = y as f64 + sub_y;
 
-            let sub_color = if let Some(info) = self.trace(px, py) {
+            let sub_color = if let Some(info) = self.trace_pixel(px, py) {
                 let object = &self.scene.objects[info.primitive];
                 let shader = &self.scene.shaders[object.shader];
                 shader.shade(self, &info)
@@ -77,9 +69,8 @@ where
     }
 }
 
-impl<C, S> Tracer for Renderer<C, S>
+impl<S> Tracer for Renderer<S>
 where
-    C: Camera,
     S: Sampler,
 {
     fn trace_ray(&self, ray: Ray, x: f64, y: f64) -> Option<TraceInfo> {
@@ -87,7 +78,7 @@ where
         let mut intersection = Intersection::none();
 
         for (i, obj) in self.scene.objects.iter().enumerate() {
-            let primitive = &self.scene.primitives[obj.geometry];
+            let primitive = &self.scene.primitives[obj.primitive];
             if let Some(other) = primitive.intersects(ray) {
                 if other.t < intersection.t && other.t > 0.0 {
                     intersection = other;
@@ -109,8 +100,16 @@ where
         }
     }
 
-    fn trace(&self, x: f64, y: f64) -> Option<TraceInfo> {
-        let ray = self.camera.cast_ray(x, y);
+    fn trace_pixel(&self, x: f64, y: f64) -> Option<TraceInfo> {
+        let ray = self.scene.camera.cast_ray(x, y);
         self.trace_ray(ray, x, y)
+    }
+
+    fn shader(&self, index: usize) -> Option<&Shader> {
+        self.scene.shaders.get(index).map(|shader| &**shader)
+    }
+
+    fn light(&self, index: usize) -> Option<&DirectionalLight> {
+        self.scene.lights.get(index).map(|light| &**light)
     }
 }

@@ -1,0 +1,97 @@
+{
+    "background": [1, 1, 1],
+    "camera": {
+        "type": "perspective",
+        "width": 960,
+        "height": 540,
+        "position": [-2, 10, 18],
+        "look_at": [0, 0, 0],
+        "fov": 1.309,
+        "view_distance": 1,
+        "up": [0, 1, 0]
+    },
+    "lights": [
+        {
+            "type": "directional",
+            "intensity": 1,
+            "direction": [0.5930296457757824, 0.5446390350150271, 0.5930296457757825]
+        }
+    ],
+    "shaders": [
+        {
+            "type": "constant",
+            "color": [0.9, 0.9, 0.9]
+        },
+        {
+            "type": "phong",
+            "wraps": 0,
+            "lights": [0],
+            "bias": 0.000001,
+            "ambient": [0.1, 0.1, 0.1],
+            "specular_color": [1.0, 1.0, 1.0],
+            "specular_exponent": 1.0,
+            "ks": 0.09,
+            "cel_shading": [4, 0.6]
+        },
+        {
+            "type": "feature_lines",
+            "wraps": 1,
+            "color": [0, 0, 0],
+            "quality": 2,
+            "radius": 0.75,
+            "crease_threshold": 1.39626,
+            "self_silhoutte_threshold": 10000
+        }
+    ],
+    "primitives": [
+        {
+            "type": "plane",
+            "normal": [0, 1, 0],
+            "distance": -5
+        },
+        {
+            "type": "aabb",
+            "min": [10, 0, 5],
+            "max": [16, 6, 11]
+        },
+        {
+            "type": "sphere",
+            "position": [0, 0, 0],
+            "radius": 5
+        },
+        {
+            "type": "sphere",
+            "position": [-10, 5, 5],
+            "radius": 1.5
+        },
+        {
+            "type": "bilinear_patch",
+            "nw": [-20, 8, -5],
+            "ne": [-10, 8, -5],
+            "se": [-10, -3, 5],
+            "sw": [-20, 8, 5]
+        }
+    ],
+    "objects": [
+        {
+            "primitive": 0,
+            "shader": 2
+        },
+        {
+            "primitive": 1,
+            "shader": 2
+        },
+        {
+            "primitive": 2,
+            "shader": 2
+        },
+        {
+            "primitive": 3,
+            "shader": 2
+        },
+        {
+            "primitive": 4,
+            "shader": 2
+        }
+    ]
+}

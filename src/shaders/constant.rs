@@ -13,9 +13,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use math::Ray;
+use super::shader::{Shader, TraceInfo, Tracer};
+use math::Vec3;
+use options::ConstantShaderOpts;
 
-pub trait Camera {
-    fn view_plane(&self) -> (usize, usize);
-    fn cast_ray(&self, x: f64, y: f64) -> Ray;
+#[derive(Copy, Clone, Debug, Default)]
+pub struct ConstantShader {
+    color: Vec3,
+}
+
+impl ConstantShader {
+    pub fn new(color: Vec3) -> ConstantShader {
+        ConstantShader { color }
+    }
+}
+
+impl From<ConstantShaderOpts> for ConstantShader {
+    fn from(options: ConstantShaderOpts) -> ConstantShader {
+        ConstantShader {
+            color: From::from(options.color),
+        }
+    }
+}
+
+impl Shader for ConstantShader {
+    fn shade(&self, _: &Tracer, _: &TraceInfo) -> Vec3 {
+        self.color
+    }
 }

@@ -15,6 +15,8 @@
 
 use super::primitive::{Intersection, Primitive};
 use math::{Ray, Vec3};
+use options::PlaneOpts;
+
 use std::f64::EPSILON;
 
 #[derive(Copy, Clone, Debug, Default, PartialEq)]
@@ -26,6 +28,12 @@ pub struct Plane {
 impl Plane {
     pub fn new(normal: Vec3, distance: f64) -> Plane {
         Plane { normal, distance }
+    }
+}
+
+impl From<PlaneOpts> for Plane {
+    fn from(options: PlaneOpts) -> Plane {
+        Plane::new(From::from(options.normal), options.distance)
     }
 }
 

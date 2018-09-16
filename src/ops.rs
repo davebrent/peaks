@@ -14,7 +14,6 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 use math::{Color, Vec3};
-use std::f64::consts::PI;
 use std::ops::{Add, Mul};
 use textures::Texture;
 
@@ -212,210 +211,6 @@ pub fn srgb_to_linear(input: &Texture<Color>, output: &mut Texture<Vec3>) {
     })
 }
 
-/// Apply a lowpass filter to a surface
-pub fn lowpass(input: &Texture<f64>, output: &mut Texture<f64>) {
-    let weight = 1.0 / 9.0;
-    operator3x3(input, output, |window| {
-        window[0] * weight
-            + window[1] * weight
-            + window[2] * weight
-            + window[3] * weight
-            + window[4] * weight
-            + window[5] * weight
-            + window[6] * weight
-            + window[7] * weight
-            + window[8] * weight
-    })
-}
-
-/// Apply a lowpass filter `N` times
-pub fn smooth(
-    input: &Texture<f64>,
-    output: &mut Texture<f64>,
-    iterations: usize,
-) {
-    assert_eq!(input.width, output.width);
-    assert_eq!(input.height, output.height);
-
-    let mut ping = Texture::blank(input.width, input.height);
-    let mut pong = Texture::blank(input.width, input.height);
-
-    scale(&input, &mut ping, 1.0);
-    for n in 0..iterations {
-        let (src, mut dest) = if n % 2 == 0 {
-            (&ping, &mut pong)
-        } else {
-            (&pong, &mut ping)
-        };
-        lowpass(&src, &mut dest);
-    }
-
-    let src = if iterations % 2 == 0 { &ping } else { &pong };
-    scale(&src, output, 1.0);
-}
-
-/// Calculate a surfaces normals
-pub fn normals(
-    input: &Texture<f64>,
-    output: &mut Texture<Vec3>,
-    pixel_width: f64,
-    pixel_height: f64,
-) {
-    for y in 0..output.height - 1 {
-        for x in 0..output.width - 1 {
-            let [nw, ne, sw, _] = input.lookup2x2(x, y);
-            let nw = Vec3::new(-0.5 * pixel_width, nw, -0.5 * pixel_height);
-            let ne = Vec3::new(0.5 * pixel_width, ne, -0.5 * pixel_height);
-            let sw = Vec3::new(-0.5 * pixel_width, sw, 0.5 * pixel_height);
-            let normal = Vec3::normalize(Vec3::cross(sw - ne, ne - nw));
-            output.write1x1(x, y, normal);
-        }
-    }
-}
-
-/// Calculate a surfaces 'slope' in radians
-///
-/// See explanation on the [ArcGIS tools documentation][1].
-///
-/// [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/\
-/// spatial-analyst-toolbox/how-slope-works.htm
-pub fn slope(input: &Texture<f64>, output: &mut Texture<f64>, pixel_size: f64) {
-    let cell_size = 8.0 * pixel_size;
-    operator3x3(input, output, |window| {
-        let [a, b, c, d, _, f, g, h, i] = window;
-        let dzdx = ((c + (2.0 * f) + i) - (a + (2.0 * d) + g)) / cell_size;
-        let dzdy = ((g + (2.0 * h) + i) - (a + (2.0 * b) + c)) / cell_size;
-        let rise_run = (dzdx.powi(2) + dzdy.powi(2)).sqrt();
-        rise_run.atan()
-    })
-}
-
-/// Calculate a surfaces curvature
-///
-/// See explanation on the ArcGIS documentation [here][1] and [here][2].
-///
-/// [1]: https://desktop.arcgis.com/en/arcmap/10.3/tools/\
-/// spatial-analyst-toolbox/how-curvature-works.htm
-/// [2]: https://desktop.arcgis.com/en/arcmap/10.3/manage-data/\
-/// raster-and-images/curvature-function.htm
-pub fn curvature(
-    input: &Texture<f64>,
-    output: &mut Texture<f64>,
-    pixel_size: f64,
-) {
-    let l2 = pixel_size.powi(2);
-    operator3x3(input, output, |window| {
-        let [_, z2, _, z4, z5, z6, _, z8, _] = window;
-        let d = ((z4 + z6) / 2.0 - z5) / l2;
-        let e = ((z2 + z8) / 2.0 - z5) / l2;
-        -2.0 * (d + e) * 100.0
-    })
-}
-
-/// Create a hillshade of a height map
-///
-/// See explanation [here][1].
-///
-/// [1]: https://pro.arcgis.com/en/pro-app/tool-reference/3d-analyst/
-/// how-hillshade-works.htm
-pub fn hillshade(
-    input: &Texture<f64>,
-    output: &mut Texture<f64>,
-    azimuth: f64,
-    altitude: f64,
-    pixel_size: f64,
-) {
-    let zenith_deg = 90.0 - altitude;
-    let zenith_rad = zenith_deg.to_radians();
-
-    let mut azimuth_math = 360.0 - azimuth + 90.0;
-    if azimuth_math >= 360.0 {
-        azimuth_math -= 360.0;
-    }
-
-    let azimuth_rad = azimuth_math.to_radians();
-
-    let cell_size = 8.0 * pixel_size;
-    operator3x3(input, output, |window| {
-        let [a, b, c, d, _, f, g, h, i] = window;
-        let dzdx = ((c + (2.0 * f) + i) - (a + (2.0 * d) + g)) / cell_size;
-        let dzdy = ((g + (2.0 * h) + i) - (a + (2.0 * b) + c)) / cell_size;
-        let rise_run = (dzdx.powi(2) + dzdy.powi(2)).sqrt();
-        let slope_rad = rise_run.atan();
-
-        let mut aspect_rad = 0.0;
-        if dzdx != 0.0 {
-            aspect_rad = dzdy.atan2(-dzdx);
-            if aspect_rad < 0.0 {
-                aspect_rad += 2.0 * PI;
-            }
-        } else if dzdy > 0.0 {
-            aspect_rad = PI / 2.0;
-        } else if dzdy < 0.0 {
-            aspect_rad = 2.0 * PI + -(PI / 2.0);
-        }
-
-        zenith_rad.cos() * slope_rad.cos()
-            + zenith_rad.sin()
-                * slope_rad.sin()
-                * (azimuth_rad - aspect_rad).cos()
-    })
-}
-
-pub fn terrain_generalise_weights(
-    input: &Texture<f64>,
-    output: &mut Texture<f64>,
-    pixel_size: f64,
-    curve_amp: f64,
-    slope_amp: f64,
-    positive_weights_amp: f64,
-    negative_weights_amp: f64,
-    post_smoothing: usize,
-) {
-    let width = input.width;
-    let height = input.height;
-
-    let mut sloped = Texture::blank(width, height);
-    let mut sloped_normalised = Texture::blank(width, height);
-    let mut curved = Texture::blank(width, height);
-    let mut curved_normalised = Texture::blank(width, height);
-    let mut weights = Texture::blank(width, height);
-
-    slope(&input, &mut sloped, pixel_size);
-    curvature(&input, &mut curved, pixel_size);
-
-    operator1x1(&curved, &mut curved_normalised, |v| (v * curve_amp));
-    operator1x1(&sloped, &mut sloped_normalised, |v| {
-        v.to_degrees() / 360.0 * slope_amp
-    });
-
-    for i in 0..weights.buffer.len() {
-        let slope = 1.0 - sloped_normalised.buffer[i];
-        let curvature = curved_normalised.buffer[i];
-        let gain = if curvature >= 0.0 {
-            positive_weights_amp
-        } else {
-            negative_weights_amp
-        };
-        weights.buffer[i] = (slope * curvature * gain).min(1.0).max(-1.0)
-    }
-
-    smooth(&weights, output, post_smoothing);
-}
-
-pub fn terrain_weighted_exaggeration(
-    input: &Texture<f64>,
-    output: &mut Texture<f64>,
-    weights: &Texture<f64>,
-    exagerate: f64,
-) {
-    for i in 0..output.buffer.len() {
-        let elevation = input.buffer[i];
-        let weight = weights.buffer[i];
-        output.buffer[i] = elevation + (elevation * exagerate * weight)
-    }
-}
-
 pub fn byte_stack_to_rgb(
     red: &Texture<u8>,
     green: &Texture<u8>,
@@ -441,20 +236,6 @@ mod tests {
     }
 
     #[test]
-    fn test_slope_calculation() {
-        // Values taken from the arcgis example
-        let mut output = Texture::blank(3, 3);
-        let input = Texture::new(
-            3,
-            3,
-            vec![50.0, 45.0, 50.0, 30.0, 30.0, 30.0, 8.0, 10.0, 10.0],
-        );
-        slope(&input, &mut output, 5.0);
-        let result = output.lookup1x1(1, 1).to_degrees().round() as usize;
-        assert_eq!(result, 75);
-    }
-
-    #[test]
     fn blitting_textures() {
         let mut dest = Texture::new(8, 8, vec![0.0; 8 * 8]);
         let mut src = Texture::new(2, 2, vec![0.0; 2 * 2]);
@@ -466,35 +247,6 @@ mod tests {
         assert_eq!(dest.lookup1x1(0, 0), 0.0);
         assert_eq!(dest.lookup1x1(6, 6), 250.0);
         assert_eq!(dest.lookup1x1(7, 7), 255.0);
-    }
-
-    #[test]
-    fn normals_flat_surface() {
-        let mut output = Texture::blank(3, 3);
-        #[cfg_attr(rustfmt, rustfmt_skip)]
-        let input = Texture::new(3, 3, vec![
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0,
-            0.0, 0.0, 0.0
-        ]);
-        normals(&input, &mut output, 1.0, 1.0);
-        assert_eq!(output.lookup1x1(1, 1), Vec3::new(0.0, 1.0, 0.0))
-    }
-
-    #[test]
-    fn normals_sloped_surface() {
-        let mut output = Texture::blank(3, 3);
-        #[cfg_attr(rustfmt, rustfmt_skip)]
-        let input = Texture::new(3, 3, vec![
-            1.0, 2.0 / 3.0, 1.0 / 3.0,
-            1.0, 2.0 / 3.0, 1.0 / 3.0,
-            1.0, 2.0 / 3.0, 1.0 / 3.0,
-        ]);
-        normals(&input, &mut output, 1.0 / 3.0, 1.0 / 3.0);
-        assert_eq!(
-            output.lookup1x1(1, 1),
-            Vec3::new(0.7071067811865476, 0.7071067811865476, 0.0)
-        )
     }
 
     #[test]
@@ -561,20 +313,6 @@ mod tests {
         ]);
         assert_eq!(bilinear_patches_mipmap1.buffer, [7.0, 12.0, 8.0, 13.0]);
         assert_eq!(bilinear_patches_mipmap2.buffer, [13.0]);
-    }
-
-    #[test]
-    fn test_hillshade_calculation() {
-        let mut output = Texture::blank(3, 3);
-        #[cfg_attr(rustfmt, rustfmt_skip)]
-        let input = Texture::new(3, 3, vec![
-            2450.0, 2461.0, 2483.0,
-            2452.0, 2461.0, 2483.0,
-            2447.0, 2455.0, 2477.0,
-        ]);
-        hillshade(&input, &mut output, 315.0, 45.0, 5.0);
-        let result = output.lookup1x1(1, 1);
-        assert_eq!((result * 255.0).round() as usize, 154);
     }
 
     #[test]

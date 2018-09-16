@@ -68,6 +68,17 @@ impl Default for AffineTransform {
     }
 }
 
+impl From<[f64; 4]> for AffineTransform {
+    fn from(transform: [f64; 4]) -> AffineTransform {
+        AffineTransform::new(
+            transform[0],
+            transform[1],
+            transform[2],
+            transform[3],
+        )
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
