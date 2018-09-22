@@ -18,21 +18,23 @@ extern crate serde_json;
 
 use peaks::io::png::export;
 use peaks::ops::linear_to_srgb;
-use peaks::{render_threaded, RegularGridSampler, Renderer, Scene, Texture};
+use peaks::{render_threaded, Renderer, Scene, Texture};
 
 use std::io::Result;
 
 pub fn main() -> Result<()> {
-    let options = serde_json::from_str(include_str!("basic.json"))?;
-    let scene = Scene::new(options);
+    let deff = serde_json::from_str(include_str!("basic.json"))?;
+    let scene = Scene::new(deff);
+
+    let multi_samples = 4;
+    let num_workers = 4;
+    let tile_size = 8;
+
     let (width, height) = scene.camera.view_plane();
-
-    let sampler = RegularGridSampler::new(16);
-    let renderer = Renderer::new(scene, sampler);
-
+    let renderer = Renderer::new(multi_samples, scene);
     let mut surface = Texture::blank(width, height);
     let mut output = Texture::blank(width, height);
-    render_threaded(&mut surface, &renderer, 4, 8);
+    render_threaded(&mut surface, &renderer, num_workers, tile_size);
     linear_to_srgb(&surface, &mut output);
     export("basic.png", &output)
 }

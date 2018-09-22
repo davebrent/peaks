@@ -16,7 +16,6 @@
 use math::Vec3;
 use ops::{blit, blit_region};
 use render::Renderer;
-use samplers::Sampler;
 use textures::{Texture, TileIterator};
 
 use std::io::{self, Write};
@@ -111,10 +110,7 @@ impl ProgressCounter {
     }
 }
 
-pub fn render<S>(image: &mut Texture<Vec3>, renderer: &Renderer<S>)
-where
-    S: Sampler,
-{
+pub fn render(image: &mut Texture<Vec3>, renderer: &Renderer) {
     let mut progress = ProgressCounter::new(30, image.width * image.height);
     let mut completed = 0;
 
@@ -135,14 +131,12 @@ struct RenderState {
     tiles: TileIterator,
 }
 
-fn worker<S>(
+fn worker(
     state: &Arc<Mutex<RenderState>>,
-    renderer: &Renderer<S>,
+    renderer: &Renderer,
     sender: &Sender<usize>,
     tile_size: usize,
-) where
-    S: 'static + Sampler + Clone,
-{
+) {
     let mut local = Texture::blank(tile_size, tile_size);
     let mut work = { state.lock().unwrap().tiles.next() };
 
@@ -169,14 +163,12 @@ fn worker<S>(
     }
 }
 
-pub fn render_threaded<S>(
+pub fn render_threaded(
     output: &mut Texture<Vec3>,
-    renderer: &Renderer<S>,
+    renderer: &Renderer,
     num_workers: usize,
     tile_size: usize,
-) where
-    S: 'static + Sampler + Clone,
-{
+) {
     let width = output.width;
     let height = output.height;
     let total = width * height;

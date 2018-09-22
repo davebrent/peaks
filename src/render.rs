@@ -16,33 +16,25 @@
 use lights::DirectionalLight;
 use math::{Ray, Vec3};
 use primitives::Intersection;
-use samplers::Sampler;
+use samplers::{RegularGridSampler, Sampler};
 use scene::Scene;
 use shaders::{Shader, TraceInfo, Tracer};
 
 #[derive(Clone)]
-pub struct Renderer<S> {
+pub struct Renderer {
     scene: Scene,
-    sampler: S,
+    sampler: RegularGridSampler,
 }
 
-unsafe impl<S> Send for Renderer<S>
-where
-    S: Sampler,
-{
-}
-unsafe impl<S> Sync for Renderer<S>
-where
-    S: Sampler,
-{
-}
+unsafe impl Send for Renderer {}
+unsafe impl Sync for Renderer {}
 
-impl<S> Renderer<S>
-where
-    S: Sampler,
-{
-    pub fn new(scene: Scene, sampler: S) -> Renderer<S> {
-        Renderer { sampler, scene }
+impl Renderer {
+    pub fn new(multi_samples: usize, scene: Scene) -> Renderer {
+        Renderer {
+            sampler: RegularGridSampler::new(multi_samples),
+            scene,
+        }
     }
 
     /// Return a color for a pixel
@@ -69,10 +61,7 @@ where
     }
 }
 
-impl<S> Tracer for Renderer<S>
-where
-    S: Sampler,
-{
+impl Tracer for Renderer {
     fn trace_ray(&self, ray: Ray, x: f64, y: f64) -> Option<TraceInfo> {
         let mut index = 0;
         let mut intersection = Intersection::none();
