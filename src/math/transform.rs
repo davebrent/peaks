@@ -30,6 +30,7 @@ impl AffineTransform {
 
     /// Return the result of the transform
     #[inline(always)]
+    #[allow(dead_code)]
     pub fn forward(&self, x: f64, y: f64) -> (f64, f64) {
         let [e, f, a, d] = self.transform;
         let x = e + x * a;
@@ -53,12 +54,6 @@ impl AffineTransform {
         let x = (x - e) / a;
         let y = (y - f) / d;
         (x, y)
-    }
-
-    /// Return the x/y units size of the transform
-    #[inline(always)]
-    pub fn unit_size(&self) -> (f64, f64) {
-        (self.transform[2], self.transform[3])
     }
 }
 

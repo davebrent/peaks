@@ -16,4 +16,3 @@
 pub mod gdal;
 pub mod ogr;
 pub mod png;
-pub mod ppm;

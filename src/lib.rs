@@ -20,11 +20,11 @@ extern crate serde;
 extern crate serde_derive;
 
 mod cameras;
-pub mod exec;
-pub mod io;
+mod exec;
+mod io;
 mod lights;
 mod math;
-pub mod ops;
+mod ops;
 mod options;
 mod primitives;
 mod render;
@@ -34,20 +34,11 @@ mod shaders;
 mod shapes;
 mod textures;
 
-pub use cameras::{Camera, OrthographicCamera, PinholeCamera};
 pub use exec::{render, render_threaded};
-pub use lights::DirectionalLight;
-pub use math::{transform_coords, AffineTransform, Color, Ray, Vec3};
-pub use options::SceneOpts;
-pub use primitives::{
-    Aabb, BilinearPatch, HeightMap, Intersection, Plane, Primitive, Sphere,
-};
+pub use io::png::export;
+pub use math::{Color, Ray, Vec3};
+pub use ops::{linear_to_srgb, srgb_to_linear};
+pub use options::*;
 pub use render::Renderer;
-pub use samplers::{RayStencilSampler, RegularGridSampler, Sampler};
-pub use scene::{Object, Scene};
-pub use shaders::{
-    ConstantShader, FeatureLineShader, NormalShader, PhongShader, SdfShader,
-    Shader, TextureShader,
-};
-pub use shapes::{LineString, Point, Polygon, Ring, Shape};
-pub use textures::{Bilinear, Texture};
+pub use scene::Scene;
+pub use textures::Texture;

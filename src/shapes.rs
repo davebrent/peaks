@@ -13,9 +13,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
-use math::{AffineTransform, Vec3};
+use math::Vec3;
 use std::f64::INFINITY;
-use textures::{Bilinear, Texture};
 
 #[derive(Copy, Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Point {
@@ -76,22 +75,6 @@ impl Shape {
             Shape::Polygon(ref shape) => shape.distance(point),
         }
     }
-
-    /// Project the shape onto a height map
-    pub fn project(
-        &mut self,
-        transform: AffineTransform,
-        surface: &Texture<f64>,
-    ) {
-        match *self {
-            Shape::Point(ref mut shape) => shape.project(transform, surface),
-            Shape::LineString(ref mut shape) => {
-                shape.project(transform, surface)
-            }
-            Shape::Ring(ref mut shape) => shape.project(transform, surface),
-            Shape::Polygon(ref mut shape) => shape.project(transform, surface),
-        }
-    }
 }
 
 impl Point {
@@ -105,15 +88,6 @@ impl Point {
 
     pub fn distance(&self, point: Vec3) -> f64 {
         Vec3::distance(self.point, point)
-    }
-
-    pub fn project(
-        &mut self,
-        transform: AffineTransform,
-        surface: &Texture<f64>,
-    ) {
-        let (u, v) = transform.inverse(self.point.x, self.point.z);
-        self.point.y = surface.bilinear(u, v);
     }
 }
 
@@ -196,17 +170,6 @@ impl LineString {
     pub fn bbox(&self) -> Rect {
         self.bounds
     }
-
-    pub fn project(
-        &mut self,
-        transform: AffineTransform,
-        surface: &Texture<f64>,
-    ) {
-        for point in &mut self.points {
-            let (u, v) = transform.inverse(point.x, point.z);
-            point.y = surface.bilinear(u, v);
-        }
-    }
 }
 
 impl Ring {
@@ -242,14 +205,6 @@ impl Ring {
 
         signed
     }
-
-    pub fn project(
-        &mut self,
-        transform: AffineTransform,
-        surface: &Texture<f64>,
-    ) {
-        self.line.project(transform, surface);
-    }
 }
 
 impl Polygon {
@@ -269,6 +224,7 @@ impl Polygon {
         distance
     }
 
+    #[allow(dead_code)]
     pub fn contains(&self, point: Vec3) -> bool {
         if !self.exterior.contains(point) {
             return false;
@@ -279,17 +235,6 @@ impl Polygon {
             }
         }
         true
-    }
-
-    pub fn project(
-        &mut self,
-        transform: AffineTransform,
-        surface: &Texture<f64>,
-    ) {
-        self.exterior.project(transform, surface);
-        for hole in &mut self.holes {
-            hole.project(transform, surface);
-        }
     }
 }
 

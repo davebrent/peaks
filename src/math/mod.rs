@@ -14,13 +14,11 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 mod color;
-mod geo;
 mod ray;
 mod transform;
 mod vec3;
 
 pub use self::color::Color;
-pub use self::geo::transform_coords;
 pub use self::ray::Ray;
 pub use self::transform::AffineTransform;
 pub use self::vec3::Vec3;

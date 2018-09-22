@@ -14,11 +14,10 @@
 // along with Peaks. If not, see <https://www.gnu.org/licenses/>.
 
 use math::{Color, Vec3};
-use std::ops::{Add, Mul};
 use textures::Texture;
 
 /// Map a function over each pixel in a texture
-pub fn operator1x1<F, I, O>(
+fn operator1x1<F, I, O>(
     input: &Texture<I>,
     output: &mut Texture<O>,
     mut callback: F,
@@ -38,40 +37,6 @@ pub fn operator1x1<F, I, O>(
             let value = input.lookup1x1(x, y);
             let result = callback(value);
             output.write1x1(x, y, result);
-        }
-    }
-}
-
-/// Map a function over a texture with a 3x3 window
-pub fn operator3x3<F, I, O>(
-    input: &Texture<I>,
-    output: &mut Texture<O>,
-    mut callback: F,
-) where
-    F: FnMut(&[I; 9]) -> O,
-    I: Copy + Default,
-    O: Copy + Default,
-{
-    assert_eq!(input.width, output.width);
-    assert_eq!(input.height, output.height);
-
-    let width = input.width;
-    let height = input.height;
-
-    let mut window: [I; 9] = Default::default();
-    let indices: [isize; 3] = [-1, 0, 1];
-
-    for y in 0..height {
-        for x in 0..width {
-            for yw in &indices {
-                for xw in &indices {
-                    let bx = (x as isize + xw).max(0).min(width as isize - 1);
-                    let by = (y as isize + yw).max(0).min(height as isize - 1);
-                    let iw = (3 * (yw + 1) + (xw + 1)) as usize;
-                    window[iw] = input.lookup1x1(bx as usize, by as usize);
-                }
-            }
-            output.write1x1(x, y, callback(&window));
         }
     }
 }
@@ -148,31 +113,6 @@ pub fn maximum_mipmap_bilinear_patch(
     }
 }
 
-/// Scale a surface by `n`
-pub fn scale<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
-where
-    T: Mul<f64, Output = T> + Copy + Default,
-{
-    operator1x1(input, output, |value| value * n)
-}
-
-/// Shift a surface by `n`
-pub fn shift<T>(input: &Texture<T>, output: &mut Texture<T>, n: f64)
-where
-    T: Add<f64, Output = T> + Copy + Default,
-{
-    operator1x1(input, output, |value| value + n)
-}
-
-/// Unpack a texture as a floating point height map
-pub fn rgb_height_map(
-    input: &Texture<Color>,
-    output: &mut Texture<f64>,
-    scaler: f64,
-) {
-    operator1x1(input, output, |color| f64::from(color.r) / 255.0 * scaler)
-}
-
 /// Convert linear colors to sRGB
 pub fn linear_to_srgb(input: &Texture<Vec3>, output: &mut Texture<Color>) {
     let encode = |component: f64| {
@@ -211,29 +151,9 @@ pub fn srgb_to_linear(input: &Texture<Color>, output: &mut Texture<Vec3>) {
     })
 }
 
-pub fn byte_stack_to_rgb(
-    red: &Texture<u8>,
-    green: &Texture<u8>,
-    blue: &Texture<u8>,
-    output: &mut Texture<Color>,
-) {
-    for i in 0..output.buffer.len() {
-        let color = Color::new(red.buffer[i], green.buffer[i], blue.buffer[i]);
-        output.buffer[i] = color;
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_operator_3x3() {
-        let mut output = Texture::blank(1, 1);
-        let input = Texture::new(1, 1, vec![50]);
-        operator3x3(&input, &mut output, |window| window[4]);
-        assert_eq!(output.lookup1x1(0, 0), 50);
-    }
 
     #[test]
     fn blitting_textures() {

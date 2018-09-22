@@ -22,9 +22,9 @@ extern crate png;
 extern crate serde_json;
 
 use docopt::Docopt;
-use peaks::io::png::export;
-use peaks::ops::linear_to_srgb;
-use peaks::{render_threaded, Renderer, Scene, Texture};
+use peaks::{
+    export, linear_to_srgb, render_threaded, Renderer, Scene, Texture,
+};
 
 use std::fs::File;
 use std::io::{stdin, Read, Result};

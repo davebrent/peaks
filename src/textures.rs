@@ -149,47 +149,6 @@ where
         ]
     }
 
-    /// Read a 3x3 window from the texture
-    pub fn lookup3x3(&self, x: usize, y: usize) -> [T; 9] {
-        let i1 = self.width * y + x;
-        let i2 = self.width * (y + 1) + x;
-        let i3 = self.width * (y + 2) + x;
-
-        [
-            self.buffer[i1],
-            self.buffer[i1 + 1],
-            self.buffer[i1 + 2],
-            self.buffer[i2],
-            self.buffer[i2 + 1],
-            self.buffer[i2 + 2],
-            self.buffer[i3],
-            self.buffer[i3 + 1],
-            self.buffer[i3 + 2],
-        ]
-    }
-
-    /// Lookup texture values for an arbitrary sized window
-    pub fn lookup(&self, x: usize, y: usize, w: usize, h: usize) -> Vec<T> {
-        let mut out = Vec::with_capacity(w * h);
-        for yi in y..y + h {
-            for xi in x..x + w {
-                let i = self.width * yi + xi;
-                out.push(self.buffer[i]);
-            }
-        }
-        out
-    }
-
-    /// Write a single value to the texture
-    pub fn write(&mut self, x: usize, y: usize, w: usize, h: usize, value: T) {
-        for yi in y..y + h {
-            for xi in x..x + w {
-                let i = self.width * yi + xi;
-                self.buffer[i] = value;
-            }
-        }
-    }
-
     /// Iterate over the image in fixed size square tiles
     pub fn tiles(&mut self, size: usize) -> TileIterator {
         TileIterator {

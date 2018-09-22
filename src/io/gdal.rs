@@ -21,7 +21,7 @@ use gdal::errors::Result;
 use gdal::raster::{Dataset, RasterBand};
 use gdal::spatial_ref::SpatialRef;
 
-use math::{transform_coords, AffineTransform};
+use math::AffineTransform;
 use textures::Texture;
 
 /// Import a region specified in pixel coordinates from a set of raster bands
@@ -59,41 +59,6 @@ where
     let yo = (transform[3] + (y as f64 * transform[5])) * -1.0;
 
     Ok((proj4, AffineTransform::new(xo, yo, pw, ph), rasters))
-}
-
-/// Import a region specified in spatial coordinates from a set of raster bands
-pub fn import_spatial<P, D>(
-    path: P,
-    bands: &[usize],
-    nw: (f64, f64),
-    se: (f64, f64),
-    inp_proj4: &str,
-) -> Result<(String, AffineTransform, Vec<Texture<D>>)>
-where
-    P: AsRef<Path>,
-    D: Copy + Clone + Default + PartialEq + GdalRasterType<D>,
-{
-    let dataset = try!(Dataset::open(path.as_ref()));
-    let transform = try!(dataset.geo_transform());
-    let spat_ref = try!(SpatialRef::from_wkt(&dataset.projection()));
-    let proj4 = try!(spat_ref.to_proj4());
-
-    let nw = transform_coords(nw.0, nw.1, inp_proj4, &proj4);
-    let se = transform_coords(se.0, se.1, inp_proj4, &proj4);
-
-    let transform = AffineTransform::new(
-        transform[0],
-        transform[3],
-        transform[1],
-        transform[5],
-    );
-
-    let (x1, y1) = transform.inverse(nw.0, nw.1);
-    let (x2, y2) = transform.inverse(se.0, se.1);
-    let width = (x2 - x1) as usize;
-    let height = (y2 - y1) as usize;
-
-    import_rect(path, bands, x1 as usize, y1 as usize, width, height)
 }
 
 /// Import all specified raster bands

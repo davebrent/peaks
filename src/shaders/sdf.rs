@@ -65,16 +65,16 @@ impl From<SdfShaderOpts> for SdfShader {
             _ => panic!("Unsupported format"),
         };
 
-        SdfShader {
-            wraps: options.wraps,
+        SdfShader::new(
+            options.wraps,
             shapes,
-            tolerance: options.tolerance,
-            color: From::from(options.color),
-            alpha: options.alpha,
-            stroke_width: options.stroke_width,
-            stroke_color: From::from(options.stroke_color),
-            offset: options.offset,
-        }
+            options.tolerance,
+            From::from(options.color),
+            options.alpha,
+            options.stroke_width,
+            From::from(options.stroke_color),
+            options.offset,
+        )
     }
 }
 

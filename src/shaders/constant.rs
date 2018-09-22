@@ -30,9 +30,7 @@ impl ConstantShader {
 
 impl From<ConstantShaderOpts> for ConstantShader {
     fn from(options: ConstantShaderOpts) -> ConstantShader {
-        ConstantShader {
-            color: From::from(options.color),
-        }
+        ConstantShader::new(From::from(options.color))
     }
 }
 
