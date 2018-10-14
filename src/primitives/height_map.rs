@@ -22,6 +22,7 @@ use math::{AffineTransform, Ray, Vec3};
 use ops::{blit, height_map_to_bilinear_patch, maximum_mipmap_bilinear_patch};
 use options::{HeightMapOpts, Loader};
 use textures::Texture;
+use shapes::Rect;
 
 use std::cmp;
 
@@ -32,6 +33,7 @@ fn ceil_pow2(num: usize) -> usize {
 }
 
 pub struct HeightMap {
+    pub rect: Rect,
     /// A transform from world space coordinates to raster space
     pub transform: AffineTransform,
     /// Map containing bilinear patches
@@ -74,7 +76,25 @@ impl HeightMap {
             maximum_mipmaps.push(next);
         }
 
+        let rect = {
+            let width = height_map.width;
+            let depth = height_map.height;
+
+            let (x0, z0) = transform.forward(0.0, 0.0);
+            let (x1, _) = transform.forward(width as f64, 0.0);
+            let (_, z1) = transform.forward(width as f64, depth as f64);
+            let (_, _) = transform.forward(0.0, depth as f64);
+
+            Rect::new(
+                Vec3::new(x0, 0.0, z0),
+                Vec3::new(x1, 0.0, z0),
+                Vec3::new(x1, 0.0, z1),
+                Vec3::new(x0, 0.0, z1),
+            )
+        };
+
         HeightMap {
+            rect,
             transform,
             bilinear_patches,
             maximum_mipmaps,
@@ -159,7 +179,12 @@ impl Primitive for HeightMap {
                 let sw = Vec3::new(min_x, sw, max_z);
                 let patch = BilinearPatch::new(nw, ne, se, sw);
                 match patch.intersects(ray) {
-                    Some(intersection) => return Some(intersection),
+                    Some(intersection) => {
+                        let p = ray.origin + ray.direction * intersection.t;
+                        if self.rect.contains(Vec3::new(p.x, 0.0, p.z)) {
+                            return Some(intersection)
+                        }
+                    },
                     _ => continue,
                 };
             } else {
