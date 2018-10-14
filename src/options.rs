@@ -51,7 +51,7 @@ pub struct GdalLoader {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct OgrLoader {
     pub filepath: String,
-    pub layer: usize,
+    pub layer: String,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

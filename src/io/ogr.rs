@@ -23,15 +23,15 @@ use math::Vec3;
 use shapes::{LineString, Point, Polygon, Ring, Shape};
 
 /// Import geometry in multiple layers from an OGR supported file
-pub fn import<P>(path: P, layers: &[usize]) -> Result<Vec<Vec<Shape>>>
+pub fn import<P>(path: P, layers: &[String]) -> Result<Vec<Vec<Shape>>>
 where
     P: AsRef<Path>,
 {
     let mut dataset = try!(Dataset::open(path.as_ref()));
     let mut output = Vec::with_capacity(layers.len());
 
-    for index in layers {
-        let input_layer = try!(dataset.layer(*index as isize));
+    for name in layers {
+        let input_layer = try!(dataset.layer_by_name(name));
         let mut shapes = vec![];
         for feature in input_layer.features() {
             let geometry = feature.geometry();
@@ -39,6 +39,7 @@ where
                 shapes.push(shape);
             }
         }
+        assert!(shapes.len() > 0);
         output.push(shapes);
     }
 
@@ -81,23 +82,33 @@ fn from_point(geometry: &Geometry) -> Shape {
 
 fn from(geometry: &Geometry) -> Vec<Shape> {
     match geometry.geometry_type() {
-        OGRwkbGeometryType::wkbPoint => vec![from_point(&geometry)],
-        OGRwkbGeometryType::wkbLineString => vec![from_line(&geometry)],
-        OGRwkbGeometryType::wkbPolygon => vec![from_polygon(&geometry)],
-        OGRwkbGeometryType::wkbMultiPolygon => (0..geometry.geometry_count())
+        OGRwkbGeometryType::wkbPoint | OGRwkbGeometryType::wkbPoint25D => {
+            vec![from_point(&geometry)]
+        }
+        OGRwkbGeometryType::wkbLineString
+        | OGRwkbGeometryType::wkbLineString25D => vec![from_line(&geometry)],
+        OGRwkbGeometryType::wkbPolygon | OGRwkbGeometryType::wkbPolygon25D => {
+            vec![from_polygon(&geometry)]
+        }
+        OGRwkbGeometryType::wkbMultiPolygon
+        | OGRwkbGeometryType::wkbMultiPolygon25D => (0..geometry
+            .geometry_count())
             .map(|n: usize| {
                 let geometry = unsafe { geometry._get_geometry(n) };
                 from_polygon(&geometry)
             })
             .collect(),
-        OGRwkbGeometryType::wkbMultiLineString => (0..geometry
+        OGRwkbGeometryType::wkbMultiLineString
+        | OGRwkbGeometryType::wkbMultiLineString25D => (0..geometry
             .geometry_count())
             .map(|n: usize| {
                 let geometry = unsafe { geometry._get_geometry(n) };
                 from_line(&geometry)
             })
             .collect(),
-        OGRwkbGeometryType::wkbMultiPoint => (0..geometry.geometry_count())
+        OGRwkbGeometryType::wkbMultiPoint
+        | OGRwkbGeometryType::wkbMultiPoint25D => (0..geometry
+            .geometry_count())
             .map(|n: usize| {
                 let geometry = unsafe { geometry._get_geometry(n) };
                 from_point(&geometry)
