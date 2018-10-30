@@ -114,6 +114,7 @@ pub struct SdfShaderOpts {
     pub alpha: f64,
     pub stroke_width: f64,
     pub stroke_color: [f64; 3],
+    pub stroke_alpha: f64,
     pub offset: f64,
 }
 

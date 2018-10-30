@@ -28,6 +28,7 @@ pub struct SdfShader {
     alpha: f64,
     stroke_width: f64,
     stroke_color: Vec3,
+    stroke_alpha: f64,
     offset: f64,
 }
 
@@ -40,6 +41,7 @@ impl SdfShader {
         alpha: f64,
         stroke_width: f64,
         stroke_color: Vec3,
+        stroke_alpha: f64,
         offset: f64,
     ) -> SdfShader {
         SdfShader {
@@ -50,6 +52,7 @@ impl SdfShader {
             alpha,
             stroke_width,
             stroke_color,
+            stroke_alpha,
             offset,
         }
     }
@@ -73,6 +76,7 @@ impl From<SdfShaderOpts> for SdfShader {
             options.alpha,
             options.stroke_width,
             From::from(options.stroke_color),
+            From::from(options.stroke_alpha),
             options.offset,
         )
     }
@@ -93,12 +97,12 @@ impl Shader for SdfShader {
 
             let distance = shape.distance(point);
             if distance < self.tolerance {
-                let color = if distance > self.tolerance - self.stroke_width {
-                    self.stroke_color
+                let (color, alpha) = if distance > self.tolerance - self.stroke_width {
+                    (self.stroke_color, self.stroke_alpha)
                 } else {
-                    self.color
+                    (self.color, self.alpha)
                 };
-                return color * self.alpha + base * (1.0 - self.alpha);
+                return color * alpha + base * (1.0 - alpha);
             }
         }
 
